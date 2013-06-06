@@ -12,13 +12,20 @@
 #include <time.h>
 #include <math.h>
 #include <float.h>
-#include "load_iris_data.h"
+//#include "load_iris_data.h"
+#include "load_cifar10_data.h"
 #include "kmenas_serial.h"
 
 typedef void (*initFunction)(double *, double *, int);
 typedef void (*loadDataFunction)(double **X, int **y);
 
 int main(int argc, char **argv) {
+
+	srand(time(NULL));
+	run_kmeans(&InitializeCentroids, load_cifar_data_from_batches, 10);
+
+
+	/*
 	srand(time(NULL));
 	if (argc > 1 && strcmp(argv[1], "test") == 0)
 	{
@@ -27,14 +34,12 @@ int main(int argc, char **argv) {
 		CompareTestResultsAgainstBaseline (centroidPosition);
 	}
 	else
-		run_kmeans(&InitializeCentroids, load_iris_data, 3);
+		run_kmeans(&InitializeCentroids, load_iris_data, 10);
+
+	*/
 	return 0;
 }
 
-void load_iris_data(double **X, int **y)
-{
-	load_iris_data_from_file("iris.data", X, y);
-}
 
 double *run_kmeans(initFunction InitializeCentroidsFunction,
 				   loadDataFunction LoadDataFunction,
@@ -107,6 +112,11 @@ double *run_kmeans(initFunction InitializeCentroidsFunction,
 		printf("%.17g %.17g %.17g %.17g\n", centroidPosition[i * NDIM + 0], centroidPosition[i * NDIM + 1], centroidPosition[i * NDIM + 2], centroidPosition[i * NDIM + 3]);
 	fflush(stdout);
 	return centroidPosition;
+}
+
+void load_iris_data(double **X, int **y)
+{
+	load_iris_data_from_file("iris.data", X, y);
 }
 
 
