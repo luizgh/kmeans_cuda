@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "load_iris_data.h"
+#include <string.h>
 /*load iris data into a matrix X, and vector y. Sample data format:
 5.1,3.5,1.4,0.2,Iris-setosa
 4.9,3.0,1.4,0.2,Iris-setosa

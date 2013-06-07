@@ -11,7 +11,7 @@
 #define NEXAMPLES 150
 #define NDIM 4
 
-const static char iris_classes[3][20] = {"Iris-setosa", "Iris-versicolor", "Iris-virginica"};
+static char iris_classes[3][20] = {"Iris-setosa", "Iris-versicolor", "Iris-virginica"};
 int load_iris_data_from_file(char *filename, double **X, int **y);
 
 

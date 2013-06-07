@@ -14,10 +14,8 @@
 #include <float.h>
 //#include "load_iris_data.h"
 #include "load_cifar10_data.h"
-#include "kmenas_serial.h"
+#include "kmeans_serial.h"
 
-typedef void (*initFunction)(double *, double *, int);
-typedef void (*loadDataFunction)(double **X, int **y);
 
 int main(int argc, char **argv) {
 
@@ -25,7 +23,7 @@ int main(int argc, char **argv) {
 	run_kmeans(&InitializeCentroids, load_cifar_data_from_batches, 10);
 
 
-	/*
+/*
 	srand(time(NULL));
 	if (argc > 1 && strcmp(argv[1], "test") == 0)
 	{
@@ -35,8 +33,8 @@ int main(int argc, char **argv) {
 	}
 	else
 		run_kmeans(&InitializeCentroids, load_iris_data, 10);
+*/
 
-	*/
 	return 0;
 }
 
@@ -77,7 +75,7 @@ double *run_kmeans(initFunction InitializeCentroidsFunction,
 		//Find closest centroids
 		changedFromLastIteration = 0;
 		for (iExample = 0; iExample < NEXAMPLES; iExample++) {
-			int closestCentroid = GetClosestCentroid(dataX, centroidPosition, centroidAssignedToExample, iExample, nCentroids);
+			int closestCentroid = GetClosestCentroid(dataX, centroidPosition, iExample, nCentroids);
 			if (closestCentroid != centroidAssignedToExample[iExample])
 				changedFromLastIteration = 1;
 			centroidAssignedToExample[iExample] = closestCentroid;
@@ -113,12 +111,12 @@ double *run_kmeans(initFunction InitializeCentroidsFunction,
 	fflush(stdout);
 	return centroidPosition;
 }
-
-void load_iris_data(double **X, int **y)
+/*
+int load_iris_data(double **X, int **y)
 {
-	load_iris_data_from_file("iris.data", X, y);
+	return load_iris_data_from_file("iris.data", X, y);
 }
-
+*/
 
 void ClearIntArray(int *vector, int size)
 
@@ -167,7 +165,7 @@ double CalculateDistance(double *dataX, double *centroidPosition, int iExample, 
 	return sqrt(sum);
 }
 
-int GetClosestCentroid (double *dataX, double *centroidPosition, int *centroidAssignedToExample, int iExample, int nCentroids)
+int GetClosestCentroid (double *dataX, double *centroidPosition, int iExample, int nCentroids)
 {
 	//Find the centroid closest to a data point
 	double distanceToCurrentCentroid;

@@ -3,7 +3,7 @@
 #include <assert.h>
 #include "load_cifar10_data.h"
 
-
+void processBatch(int batchNumber,  double **X, int **y);
 
 /*load iris data into a matrix X, and vector y. Sample data format:
 5.1,3.5,1.4,0.2,Iris-setosa
