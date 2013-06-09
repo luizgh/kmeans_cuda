@@ -1,8 +1,8 @@
 NVCC=nvcc
 
 CUDA_INCLUDEPATH=/usr/local/cuda-5.0/include
-NVCC_OPTS=-O3 -arch=sm_20 -Xcompiler -Wall -Xcompiler -Wextra -m64
-GCC_OPTS=-O3 -Wall -Wextra -m64 -g
+NVCC_OPTS=-arch=sm_20 -Xcompiler -Wall -Xcompiler -Wextra -m64 #-O3
+GCC_OPTS=-Wall -Wextra -m64 -g #-O3
 
 all: bin/run_kmeans bin/test_kmeans
 

@@ -19,17 +19,17 @@ IrisDataset::IrisDataset() {
 int IrisDataset::load_iris_data_from_file(const char *filename)
 //Expected:
 //filename: string pointing to the flat file with iris data
-//X: vector of size: sizeof(double) * numExamples * 4
+//X: vector of size: sizeof(float) * numExamples * 4
 //Y: vector of size: sizeof(int) * numExamples
 {
-	X = (double*) malloc (sizeof(double) * (nExamples * nDim));
+	X = (float*) malloc (sizeof(float) * (nExamples * nDim));
 	y = (int*) malloc (sizeof(int) * (nExamples));
 
 	FILE *file = fopen(filename,"r");
 	if (!file) return 0;
 
 	char line[256];
-	double tempx[4];
+	float tempx[4];
 	char flowerclass[100];
 	int i = 0;
 	int j;
@@ -37,7 +37,7 @@ int IrisDataset::load_iris_data_from_file(const char *filename)
 	while (fgets(line, sizeof(line), file))
 	{
 		//Get line content
-		sscanf(line, "%lf,%lf,%lf,%lf,%s", &tempx[0], &tempx[1], &tempx[2], &tempx[3], flowerclass);
+		sscanf(line, "%f,%f,%f,%f,%s", &tempx[0], &tempx[1], &tempx[2], &tempx[3], flowerclass);
 
 		//Assign X
 		X[i*4 + 0] = tempx[0];

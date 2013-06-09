@@ -12,11 +12,11 @@ class KmeansSerial {
 
 private:
 	bool verbose;
-	double *dataX;
+	float *dataX;
 
-	double *centroidPosition;
+	float *centroidPosition;
 	int *centroidAssignedToExample;
-	double *runningSumOfExamplesPerCentroid;
+	float *runningSumOfExamplesPerCentroid;
 	int *numberOfExamplePerCentroid;
 
 	int nExamples;
@@ -28,16 +28,16 @@ private:
 	int FindClosestCentroidsAndCheckForChanges();
 	void AllocateMemoryForCentroidVariables();
 	void ClearIntArray(int* vector, int size);
-	void ClearDoubleArray(double* vector, int size);
-	static void InitializeCentroids(double *dataX, double *centroidPosition,int nCentroids, int nDim, int nExamples);
-	double CalculateDistance(double *dataX, double *centroidPosition, int iExample,int jCentroid);
+	void ClearfloatArray(float* vector, int size);
+	static void InitializeCentroids(float *dataX, float *centroidPosition,int nCentroids, int nDim, int nExamples);
+	float CalculateDistance(float *dataX, float *centroidPosition, int iExample,int jCentroid);
 	int GetClosestCentroid(int iExample);
-	void CompareTestResultsAgainstBaseline(double *centroidPosition);
+	void CompareTestResultsAgainstBaseline(float *centroidPosition);
 
 public:
-	KmeansSerial(double *data, int nExamples, int nDim, bool verbose = false);
+	KmeansSerial(float *data, int nExamples, int nDim, bool verbose = false);
 	void setInitializeCentroidsFunction(initFunction fun);
-	double* run(int nCentroids);
+	float* run(int nCentroids);
 };
 
 

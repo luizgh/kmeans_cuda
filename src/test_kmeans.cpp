@@ -11,7 +11,7 @@
 #include "kmeans_serial.h"
 #include "kmeans_parallel.h"
 
-void InitializeCentroidsTest(double *dataX, double *centroidPosition,
+void InitializeCentroidsTest(float *dataX, float *centroidPosition,
 		int nCentroids, int nDim, int) {
 	//Initialize centroids with K random examples (Forgy's method)
 	int i;
@@ -30,15 +30,14 @@ void InitializeCentroidsTest(double *dataX, double *centroidPosition,
 
 }
 
-void CompareTestResultsAgainstBaseline(double *centroidPosition, int nDim) {
+void CompareTestResultsAgainstBaseline(float *centroidPosition, int nDim) {
 	int nCentroids = 3;
-	double baseline[] = { 5.0059999999999993, 3.4180000000000006, 1.464,
-			0.24399999999999991, 6.8538461538461526, 3.0769230769230766,
-			5.7153846153846146, 2.0538461538461532, 5.8836065573770497,
-			2.7409836065573772, 4.3885245901639349, 1.4344262295081966 };
+	float baseline[] = { 5.0059995651245117, 3.4180002212524414,1.4639999866485596, 0.24399997293949127,
+			6.853844165802002, 3.0769233703613281, 5.7153849601745605, 2.0538463592529297,
+			5.8836064338684082, 2.7409837245941162, 4.3885250091552734, 1.4344264268875122 };
 	int i;
-	double maxError = 1e-5;
-	double error = 0;
+	float maxError = 1e-5;
+	float error = 0;
 	for (i = 0; i < nCentroids * nDim; i++)
 		error += fabs(centroidPosition[i] - baseline[i]);
 
@@ -47,7 +46,7 @@ void CompareTestResultsAgainstBaseline(double *centroidPosition, int nDim) {
 }
 
 int main() {
-	double *centroidPositions;
+	float *centroidPositions;
 	IrisDataset d;
 
 	KmeansParallel kmeans (d.X, d.nExamples, d.nDim, true);

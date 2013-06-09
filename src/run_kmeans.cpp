@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include <time.h>
+#include <ctime>
 #include <math.h>
 #include <float.h>
 #include "iris_data.h"

@@ -12,12 +12,18 @@ class KmeansParallel {
 
 private:
 	bool verbose;
-	double *dataX;
-
-	double *centroidPosition;
+	float *dataX;
+	float *centroidPosition;
 	int *centroidAssignedToExample;
-	double *runningSumOfExamplesPerCentroid;
+	float *runningSumOfExamplesPerCentroid;
 	int *numberOfExamplePerCentroid;
+
+	float *d_dataX;
+	float *d_centroidPosition;
+	int *d_centroidAssignedToExample;
+	float *d_runningSumOfExamplesPerCentroid;
+	int *d_numberOfExamplePerCentroid;
+
 
 	int nExamples;
 	int nDim;
@@ -27,17 +33,18 @@ private:
 
 	int FindClosestCentroidsAndCheckForChanges();
 	void AllocateMemoryForCentroidVariables();
+	void AllocateMemoryAndCopyVariablesToGPU();
 	void ClearIntArray(int* vector, int size);
-	void ClearDoubleArray(double* vector, int size);
-	static void InitializeCentroids(double *dataX, double *centroidPosition,int nCentroids, int nDim, int nExamples);
-	double CalculateDistance(double *dataX, double *centroidPosition, int iExample,int jCentroid);
+	void ClearfloatArray(float* vector, int size);
+	static void InitializeCentroids(float *dataX, float *centroidPosition,int nCentroids, int nDim, int nExamples);
+	float CalculateDistance(float *dataX, float *centroidPosition, int iExample,int jCentroid);
 	int GetClosestCentroid(int iExample);
-	void CompareTestResultsAgainstBaseline(double *centroidPosition);
+	void CompareTestResultsAgainstBaseline(float *centroidPosition);
 
 public:
-	KmeansParallel(double *data, int nExamples, int nDim, bool verbose = false);
+	KmeansParallel(float *data, int nExamples, int nDim, bool verbose = false);
 	void setInitializeCentroidsFunction(initFunction fun);
-	double* run(int nCentroids);
+	float* run(int nCentroids);
 };
 
 

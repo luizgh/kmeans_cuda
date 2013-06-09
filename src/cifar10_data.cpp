@@ -10,10 +10,10 @@ Cifar10Dataset::Cifar10Dataset(){
 int Cifar10Dataset::load_cifar_data_from_batches()
 //Expected:
 //filename: string pointing to the flat file with iris data
-//X: vector of size: sizeof(double) * numExamples * 4
+//X: vector of size: sizeof(float) * numExamples * 4
 //Y: vector of size: sizeof(int) * numExamples
 {
-	X = (double*) malloc (sizeof(double) * (nExamples * nDim));
+	X = (float*) malloc (sizeof(float) * (nExamples * nDim));
 	y = (int*) malloc (sizeof(int) * (nExamples));
 
 	int i;
@@ -42,7 +42,7 @@ void Cifar10Dataset::processBatch(int batchNumber)
 		y[i] = line[0];
 		for (j = 1; j < 3073; j++)
 		{
-			X[i * nDim + (j-1)] = (double)line[j];
+			X[i * nDim + (j-1)] = (float)line[j];
 		}
 
 		i++;

@@ -17,7 +17,7 @@
 #include "kmeans.h"
 #include "kmeans_parallel.h"
 
-KmeansParallel::KmeansParallel(double *data, int nExamples, int nDim,
+KmeansParallel::KmeansParallel(float *data, int nExamples, int nDim,
 		bool verbose) {
 	this->dataX = data;
 	this->nExamples = nExamples;
@@ -43,7 +43,7 @@ int KmeansParallel::FindClosestCentroidsAndCheckForChanges() {
 }
 
 
-double* KmeansParallel::run(int nCentroids) {
+float* KmeansParallel::run(int nCentroids) {
 	this->nCentroids = nCentroids;
 	int iExample, changedFromLastIteration;
 	AllocateMemoryForCentroidVariables();
@@ -62,7 +62,7 @@ double* KmeansParallel::run(int nCentroids) {
 
 		//Update centroid location
 		ClearIntArray(numberOfExamplePerCentroid, nCentroids);
-		ClearDoubleArray(runningSumOfExamplesPerCentroid, nCentroids * nDim);
+		ClearfloatArray(runningSumOfExamplesPerCentroid, nCentroids * nDim);
 
 		int currentCentroid;
 		for (iExample = 0; iExample < nExamples; iExample++) {
@@ -98,11 +98,15 @@ double* KmeansParallel::run(int nCentroids) {
 
 void KmeansParallel::AllocateMemoryForCentroidVariables() {
 	//Allocate memory for centroid variables
-	centroidPosition = (double*) malloc(sizeof(double) * (nCentroids * nDim));
+	centroidPosition = (float*) malloc(sizeof(float) * (nCentroids * nDim));
 	centroidAssignedToExample = (int*) malloc(sizeof(int) * nExamples);
-	runningSumOfExamplesPerCentroid = (double*) malloc(
-			sizeof(double) * (nCentroids * nDim));
+	runningSumOfExamplesPerCentroid = (float*) malloc(
+			sizeof(float) * (nCentroids * nDim));
 	numberOfExamplePerCentroid = (int*) ((malloc(sizeof(int) * nCentroids)));
+}
+
+void KmeansParallel::AllocateMemoryAndCopyVariablesToGPU() {
+
 }
 
 
@@ -113,14 +117,14 @@ void KmeansParallel::ClearIntArray(int* vector, int size) {
 }
 
 
-void KmeansParallel::ClearDoubleArray(double* vector, int size) {
+void KmeansParallel::ClearfloatArray(float* vector, int size) {
 	int i;
 	for (i = 0; i < size; i++)
 		vector[i] = 0.0;
 }
 
 
-void KmeansParallel::InitializeCentroids(double *dataX, double *centroidPosition,
+void KmeansParallel::InitializeCentroids(float *dataX, float *centroidPosition,
 		int nCentroids, int nDim, int nExamples) {
 	//Initialize centroids with K random examples (Forgy's method)
 	int i;
@@ -139,12 +143,12 @@ void KmeansParallel::InitializeCentroids(double *dataX, double *centroidPosition
 }
 
 
-double KmeansParallel::CalculateDistance(double *dataX, double *centroidPosition, int iExample,
+float KmeansParallel::CalculateDistance(float *dataX, float *centroidPosition, int iExample,
 		int jCentroid) {
 	//calculate the distance between a data point and a centroid
 	int i;
-	double sum = 0;
-	double currentVal;
+	float sum = 0;
+	float currentVal;
 	for (i = 0; i < nDim; i++) {
 		currentVal = centroidPosition[jCentroid * nDim + i]
 				- dataX[iExample * nDim + i];
@@ -156,8 +160,8 @@ double KmeansParallel::CalculateDistance(double *dataX, double *centroidPosition
 
 int KmeansParallel::GetClosestCentroid(int iExample) {
 	//Find the centroid closest to a data point
-	double distanceToCurrentCentroid;
-	double smallestDistanceToCentroid = DBL_MAX;
+	float distanceToCurrentCentroid;
+	float smallestDistanceToCentroid = DBL_MAX;
 	int assignedCentroid = -1;
 	int jCentroid;
 	for (jCentroid = 0; jCentroid < nCentroids; jCentroid++) {
@@ -174,15 +178,15 @@ int KmeansParallel::GetClosestCentroid(int iExample) {
 }
 
 
-void KmeansParallel::CompareTestResultsAgainstBaseline(double *centroidPosition) {
+void KmeansParallel::CompareTestResultsAgainstBaseline(float *centroidPosition) {
 	int nCentroids = 3;
-	double baseline[] = { 5.0059999999999993, 3.4180000000000006, 1.464,
+	float baseline[] = { 5.0059999999999993, 3.4180000000000006, 1.464,
 			0.24399999999999991, 6.8538461538461526, 3.0769230769230766,
 			5.7153846153846146, 2.0538461538461532, 5.8836065573770497,
 			2.7409836065573772, 4.3885245901639349, 1.4344262295081966 };
 	int i;
-	double maxError = 1e-5;
-	double error = 0;
+	float maxError = 1e-5;
+	float error = 0;
 	for (i = 0; i < nCentroids * nDim; i++)
 		error += fabs(centroidPosition[i] - baseline[i]);
 

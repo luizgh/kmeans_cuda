@@ -17,7 +17,7 @@
 #include "kmeans.h"
 #include "kmeans_serial.h"
 
-KmeansSerial::KmeansSerial(double *data, int nExamples, int nDim,
+KmeansSerial::KmeansSerial(float *data, int nExamples, int nDim,
 		bool verbose) {
 	this->dataX = data;
 	this->nExamples = nExamples;
@@ -43,7 +43,7 @@ int KmeansSerial::FindClosestCentroidsAndCheckForChanges() {
 }
 
 
-double* KmeansSerial::run(int nCentroids) {
+float* KmeansSerial::run(int nCentroids) {
 	this->nCentroids = nCentroids;
 	int iExample, changedFromLastIteration;
 	AllocateMemoryForCentroidVariables();
@@ -62,7 +62,7 @@ double* KmeansSerial::run(int nCentroids) {
 
 		//Update centroid location
 		ClearIntArray(numberOfExamplePerCentroid, nCentroids);
-		ClearDoubleArray(runningSumOfExamplesPerCentroid, nCentroids * nDim);
+		ClearfloatArray(runningSumOfExamplesPerCentroid, nCentroids * nDim);
 
 		int currentCentroid;
 		for (iExample = 0; iExample < nExamples; iExample++) {
@@ -98,10 +98,10 @@ double* KmeansSerial::run(int nCentroids) {
 
 void KmeansSerial::AllocateMemoryForCentroidVariables() {
 	//Allocate memory for centroid variables
-	centroidPosition = (double*) malloc(sizeof(double) * (nCentroids * nDim));
+	centroidPosition = (float*) malloc(sizeof(float) * (nCentroids * nDim));
 	centroidAssignedToExample = (int*) malloc(sizeof(int) * nExamples);
-	runningSumOfExamplesPerCentroid = (double*) malloc(
-			sizeof(double) * (nCentroids * nDim));
+	runningSumOfExamplesPerCentroid = (float*) malloc(
+			sizeof(float) * (nCentroids * nDim));
 	numberOfExamplePerCentroid = (int*) ((malloc(sizeof(int) * nCentroids)));
 }
 
@@ -113,14 +113,14 @@ void KmeansSerial::ClearIntArray(int* vector, int size) {
 }
 
 
-void KmeansSerial::ClearDoubleArray(double* vector, int size) {
+void KmeansSerial::ClearfloatArray(float* vector, int size) {
 	int i;
 	for (i = 0; i < size; i++)
 		vector[i] = 0.0;
 }
 
 
-void KmeansSerial::InitializeCentroids(double *dataX, double *centroidPosition,
+void KmeansSerial::InitializeCentroids(float *dataX, float *centroidPosition,
 		int nCentroids, int nDim, int nExamples) {
 	//Initialize centroids with K random examples (Forgy's method)
 	int i;
@@ -139,12 +139,12 @@ void KmeansSerial::InitializeCentroids(double *dataX, double *centroidPosition,
 }
 
 
-double KmeansSerial::CalculateDistance(double *dataX, double *centroidPosition, int iExample,
+float KmeansSerial::CalculateDistance(float *dataX, float *centroidPosition, int iExample,
 		int jCentroid) {
 	//calculate the distance between a data point and a centroid
 	int i;
-	double sum = 0;
-	double currentVal;
+	float sum = 0;
+	float currentVal;
 	for (i = 0; i < nDim; i++) {
 		currentVal = centroidPosition[jCentroid * nDim + i]
 				- dataX[iExample * nDim + i];
@@ -156,8 +156,8 @@ double KmeansSerial::CalculateDistance(double *dataX, double *centroidPosition, 
 
 int KmeansSerial::GetClosestCentroid(int iExample) {
 	//Find the centroid closest to a data point
-	double distanceToCurrentCentroid;
-	double smallestDistanceToCentroid = DBL_MAX;
+	float distanceToCurrentCentroid;
+	float smallestDistanceToCentroid = FLT_MAX;
 	int assignedCentroid = -1;
 	int jCentroid;
 	for (jCentroid = 0; jCentroid < nCentroids; jCentroid++) {
@@ -172,22 +172,4 @@ int KmeansSerial::GetClosestCentroid(int iExample) {
 	assert(assignedCentroid != -1);
 	return assignedCentroid;
 }
-
-
-void KmeansSerial::CompareTestResultsAgainstBaseline(double *centroidPosition) {
-	int nCentroids = 3;
-	double baseline[] = { 5.0059999999999993, 3.4180000000000006, 1.464,
-			0.24399999999999991, 6.8538461538461526, 3.0769230769230766,
-			5.7153846153846146, 2.0538461538461532, 5.8836065573770497,
-			2.7409836065573772, 4.3885245901639349, 1.4344262295081966 };
-	int i;
-	double maxError = 1e-5;
-	double error = 0;
-	for (i = 0; i < nCentroids * nDim; i++)
-		error += fabs(centroidPosition[i] - baseline[i]);
-
-	assert(error < maxError);
-	printf("OK!! Error agains baseline below threshold: %lf\n", error);
-}
-
 
