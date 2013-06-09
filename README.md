@@ -1,13 +1,13 @@
 kmeans_cuda
 ===========
 
-Kmeans implementation in C / Cuda
+Kmeans implementation in C++ / CUDA
 
 
 This repository contains the implementation of standard K-means:
 
 1) Serial version
-2) Parallel version using Cuda
+2) Parallel version using CUDA
 
 It also contains code to load the following libraries:
 
