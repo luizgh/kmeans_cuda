@@ -73,8 +73,6 @@ void run_kmeans_parallel(float *d_dataX, float *d_centroidPosition,
 							/ d_numberOfExamplePerCentroid[myExample];
 	}
 
-
-
 }
 
 /*
