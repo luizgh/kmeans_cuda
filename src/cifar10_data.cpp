@@ -3,11 +3,11 @@
 #include <assert.h>
 #include "cifar10_data.h"
 
-Cifar10Dataset::Cifar10Dataset(){
+Cifar10Dataset_1batch::Cifar10Dataset_1batch(){
 	load_cifar_data_from_batches();
 }
 
-int Cifar10Dataset::load_cifar_data_from_batches()
+int Cifar10Dataset_1batch::load_cifar_data_from_batches()
 //Expected:
 //filename: string pointing to the flat file with iris data
 //X: vector of size: sizeof(float) * numExamples * 4
@@ -16,14 +16,17 @@ int Cifar10Dataset::load_cifar_data_from_batches()
 	X = (float*) malloc (sizeof(float) * (nExamples * nDim));
 	y = (int*) malloc (sizeof(int) * (nExamples));
 
+	//We only load the first batch due to memory limitations on the GPU
 	int i;
-	for (i=1; i<=5; i++)
+	processBatch(1);
+	//TODO process all batches
+	/*for (i=1; i<=5; i++)
 		processBatch(i);
-
+	 */
 	return 1;
 }
 
-void Cifar10Dataset::processBatch(int batchNumber)
+void Cifar10Dataset_1batch::processBatch(int batchNumber)
 {
 	char filename[100];
 	sprintf(filename, "data_batch_%d.bin", batchNumber);

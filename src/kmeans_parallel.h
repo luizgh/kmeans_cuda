@@ -23,6 +23,7 @@ private:
 	int *d_centroidAssignedToExample;
 	float *d_runningSumOfExamplesPerCentroid;
 	int *d_numberOfExamplePerCentroid;
+	int* d_changedSinceLastIteration;
 
 
 	int nExamples;
@@ -34,6 +35,7 @@ private:
 	int FindClosestCentroidsAndCheckForChanges();
 	void AllocateMemoryForCentroidVariables();
 	void AllocateMemoryAndCopyVariablesToGPU();
+	void CopyResultsFromGPU();
 	void ClearIntArray(int* vector, int size);
 	void ClearfloatArray(float* vector, int size);
 	static void InitializeCentroids(float *dataX, float *centroidPosition,int nCentroids, int nDim, int nExamples);

@@ -8,6 +8,7 @@
 #include "iris_data.h"
 #include "cifar10_data.h"
 #include "kmeans.h"
+#include "kmeans_parallel.h"
 #include "kmeans_serial.h"
 
 int main(int argc, char **argv) {
@@ -22,13 +23,13 @@ int main(int argc, char **argv) {
 	if (strcmp(argv[1], "iris") == 0)
 	{
 		IrisDataset d;
-		KmeansSerial kmeans (d.X, d.nExamples, d.nDim, true);
+		KmeansParallel kmeans (d.X, d.nExamples, d.nDim, true);
 		kmeans.run(nCentroids);
 	}
 	else if (strcmp(argv[1], "cifar") == 0)
 	{
-		Cifar10Dataset d;
-		KmeansSerial kmeans (d.X, d.nExamples, d.nDim, true);
+		Cifar10Dataset_1batch d;
+		KmeansParallel kmeans (d.X, d.nExamples, d.nDim, true);
 		kmeans.run(nCentroids);
 	}
 	else

@@ -4,7 +4,6 @@
  *  Created on: 04/06/2013
  *      Author: gustavo
  */
-
 #include <cstdio>
 #include <cstdlib>
 #include <string>
@@ -12,10 +11,106 @@
 #include <ctime>
 #include <cmath>
 #include <cfloat>
-#include "iris_data.h"
-//#include "load_cifar10_data.h"
+#include "utils.h"
 #include "kmeans.h"
 #include "kmeans_parallel.h"
+
+
+__global__
+void run_kmeans_parallel(float *d_dataX, float *d_centroidPosition,
+		int *d_centroidAssignedToExample,
+		float *d_runningSumOfExamplesPerCentroid,
+		int *d_numberOfExamplePerCentroid, int nExamples, int nCentroids, int nDim, int *d_changedSinceLastIteration) {
+
+	int myExample = blockIdx.x * blockDim.x + threadIdx.x;
+	if (myExample >= nExamples)
+		return; //out of range
+
+	int i;
+	float sum = 0;
+	float currentVal;
+
+	//Find closest centroid to current example
+	float distanceToCurrentCentroid;
+	float smallestDistanceToCentroid = FLT_MAX;
+	int assignedCentroid = -1;
+	int jCentroid;
+	for (jCentroid = 0; jCentroid < nCentroids; jCentroid++) {
+		sum = 0;
+
+		for (i = 0; i < nDim; i++) {
+			currentVal = d_centroidPosition[jCentroid * nDim + i]
+					- d_dataX[myExample * nDim + i];
+			sum += currentVal * currentVal;
+		}
+		distanceToCurrentCentroid = sqrt(sum);
+
+		if (distanceToCurrentCentroid < smallestDistanceToCentroid) {
+			smallestDistanceToCentroid = distanceToCurrentCentroid;
+			assignedCentroid = jCentroid;
+		}
+	}
+	if (d_centroidAssignedToExample[myExample] != assignedCentroid)
+		*d_changedSinceLastIteration = 1;
+
+	d_centroidAssignedToExample[myExample] = assignedCentroid;
+
+	atomicAdd(&d_numberOfExamplePerCentroid[assignedCentroid], 1);
+	for (i = 0; i < nDim; i++) {
+		atomicAdd(&d_runningSumOfExamplesPerCentroid[assignedCentroid], d_dataX[myExample * nDim + i]);
+	}
+
+	//synchronize threads
+	__syncthreads();
+
+	if (myExample < nCentroids)
+	{
+		int jDim;
+		for (jDim = 0; jDim < nDim; jDim++)
+			d_centroidPosition[myExample * nDim + jDim] =
+					d_runningSumOfExamplesPerCentroid[myExample * nDim
+							+ jDim]
+							/ d_numberOfExamplePerCentroid[myExample];
+	}
+
+
+
+}
+
+/*
+	changedFromLastIteration = 1;
+	int nIteration = 0;
+	while (changedFromLastIteration) {
+		nIteration++;
+		if (this->verbose)
+			printf("Starting iteration %d\n", nIteration);
+
+
+		//Update centroid location
+		ClearIntArray(numberOfExamplePerCentroid, nCentroids);
+		ClearfloatArray(runningSumOfExamplesPerCentroid, nCentroids * nDim);
+
+		int currentCentroid;
+		for (iExample = 0; iExample < nExamples; iExample++) {
+			currentCentroid = centroidAssignedToExample[iExample];
+			numberOfExamplePerCentroid[currentCentroid]++;
+			int jDim;
+			for (jDim = 0; jDim < nDim; jDim++)
+				runningSumOfExamplesPerCentroid[currentCentroid * nDim + jDim] +=
+						dataX[iExample * nDim + jDim];
+		}
+		for (currentCentroid = 0; currentCentroid < nCentroids;
+				currentCentroid++) {
+			int jDim;
+			for (jDim = 0; jDim < nDim; jDim++)
+				centroidPosition[currentCentroid * nDim + jDim] =
+						runningSumOfExamplesPerCentroid[currentCentroid * nDim
+								+ jDim]
+								/ numberOfExamplePerCentroid[currentCentroid];
+		}
+
+	}*/
+
 
 KmeansParallel::KmeansParallel(float *data, int nExamples, int nDim,
 		bool verbose) {
@@ -42,48 +137,37 @@ int KmeansParallel::FindClosestCentroidsAndCheckForChanges() {
 	return changedFromLastIteration;
 }
 
-
 float* KmeansParallel::run(int nCentroids) {
 	this->nCentroids = nCentroids;
-	int iExample, changedFromLastIteration;
 	AllocateMemoryForCentroidVariables();
 
 	//InitializeCentroids
-	(*initializeCentroidsFunction)(dataX, centroidPosition, nCentroids, nDim, nExamples);
+	(*initializeCentroidsFunction)(dataX, centroidPosition, nCentroids, nDim,
+			nExamples);
 
-	changedFromLastIteration = 1;
-	int nIteration = 0;
-	while (changedFromLastIteration) {
-		nIteration++;
-		if (this->verbose)
-			printf("Starting iteration %d\n", nIteration);
+	AllocateMemoryAndCopyVariablesToGPU();
 
-		changedFromLastIteration = FindClosestCentroidsAndCheckForChanges();
+	//1 thread per example
+	int blockSize_1d = 512;
+	int gridSize_1d = nExamples / blockSize_1d + 1;
 
-		//Update centroid location
-		ClearIntArray(numberOfExamplePerCentroid, nCentroids);
-		ClearfloatArray(runningSumOfExamplesPerCentroid, nCentroids * nDim);
+	printf ("nExamples: %d; blockSize: %d; gridSize:%d\n", nExamples, blockSize_1d, gridSize_1d);
 
-		int currentCentroid;
-		for (iExample = 0; iExample < nExamples; iExample++) {
-			currentCentroid = centroidAssignedToExample[iExample];
-			numberOfExamplePerCentroid[currentCentroid]++;
-			int jDim;
-			for (jDim = 0; jDim < nDim; jDim++)
-				runningSumOfExamplesPerCentroid[currentCentroid * nDim + jDim] +=
-						dataX[iExample * nDim + jDim];
-		}
-		for (currentCentroid = 0; currentCentroid < nCentroids;
-				currentCentroid++) {
-			int jDim;
-			for (jDim = 0; jDim < nDim; jDim++)
-				centroidPosition[currentCentroid * nDim + jDim] =
-						runningSumOfExamplesPerCentroid[currentCentroid * nDim
-								+ jDim]
-								/ numberOfExamplePerCentroid[currentCentroid];
-		}
+    const dim3 blockSize (blockSize_1d, 1, 1);
+    const dim3 gridSize(gridSize_1d, 1, 1);
 
-	}
+
+
+	run_kmeans_parallel<<<gridSize, blockSize>>> (d_dataX, d_centroidPosition,
+			d_centroidAssignedToExample, d_runningSumOfExamplesPerCentroid, d_numberOfExamplePerCentroid, nExamples, nCentroids, nDim, d_changedSinceLastIteration);
+
+	cudaDeviceSynchronize();
+	checkCudaErrors(cudaGetLastError());
+
+	ClearfloatArray(centroidPosition, nCentroids * nDim);
+
+	CopyResultsFromGPU();
+
 	printf("done\n");
 	printf("Centroids: \n");
 	int i;
@@ -95,7 +179,6 @@ float* KmeansParallel::run(int nCentroids) {
 	return centroidPosition;
 }
 
-
 void KmeansParallel::AllocateMemoryForCentroidVariables() {
 	//Allocate memory for centroid variables
 	centroidPosition = (float*) malloc(sizeof(float) * (nCentroids * nDim));
@@ -106,9 +189,27 @@ void KmeansParallel::AllocateMemoryForCentroidVariables() {
 }
 
 void KmeansParallel::AllocateMemoryAndCopyVariablesToGPU() {
+	checkCudaErrors(cudaMalloc(&d_dataX, sizeof(float) * nExamples * nDim ));
+	checkCudaErrors(
+			cudaMalloc(&d_centroidPosition, sizeof(float) * (nCentroids * nDim)));
+	checkCudaErrors(
+			cudaMalloc(&d_centroidAssignedToExample, sizeof(int) * nExamples));
+	checkCudaErrors(
+			cudaMalloc(&d_runningSumOfExamplesPerCentroid, sizeof(float) * (nCentroids * nDim)));
+	checkCudaErrors(
+			cudaMalloc(&d_numberOfExamplePerCentroid, sizeof(int) * nCentroids ));
+	checkCudaErrors(
+				cudaMalloc(&d_changedSinceLastIteration, sizeof(int) ));
 
+	checkCudaErrors(
+			cudaMemcpy(d_centroidPosition, centroidPosition, sizeof(float) * (nCentroids * nDim), cudaMemcpyHostToDevice));
+	checkCudaErrors(
+			cudaMemcpy(d_dataX, dataX, sizeof(float) * (nExamples * nDim), cudaMemcpyHostToDevice));
 }
 
+void KmeansParallel::CopyResultsFromGPU(){
+	checkCudaErrors(cudaMemcpy(centroidPosition, d_centroidPosition, sizeof(float) * (nCentroids * nDim), cudaMemcpyDeviceToHost));
+}
 
 void KmeansParallel::ClearIntArray(int* vector, int size) {
 	int i;
@@ -116,13 +217,11 @@ void KmeansParallel::ClearIntArray(int* vector, int size) {
 		vector[i] = 0;
 }
 
-
 void KmeansParallel::ClearfloatArray(float* vector, int size) {
 	int i;
 	for (i = 0; i < size; i++)
 		vector[i] = 0.0;
 }
-
 
 void KmeansParallel::InitializeCentroids(float *dataX, float *centroidPosition,
 		int nCentroids, int nDim, int nExamples) {
@@ -142,9 +241,8 @@ void KmeansParallel::InitializeCentroids(float *dataX, float *centroidPosition,
 
 }
 
-
-float KmeansParallel::CalculateDistance(float *dataX, float *centroidPosition, int iExample,
-		int jCentroid) {
+float KmeansParallel::CalculateDistance(float *dataX, float *centroidPosition,
+		int iExample, int jCentroid) {
 	//calculate the distance between a data point and a centroid
 	int i;
 	float sum = 0;
@@ -156,7 +254,6 @@ float KmeansParallel::CalculateDistance(float *dataX, float *centroidPosition, i
 	}
 	return sqrt(sum);
 }
-
 
 int KmeansParallel::GetClosestCentroid(int iExample) {
 	//Find the centroid closest to a data point
@@ -177,8 +274,8 @@ int KmeansParallel::GetClosestCentroid(int iExample) {
 	return assignedCentroid;
 }
 
-
-void KmeansParallel::CompareTestResultsAgainstBaseline(float *centroidPosition) {
+void KmeansParallel::CompareTestResultsAgainstBaseline(
+		float *centroidPosition) {
 	int nCentroids = 3;
 	float baseline[] = { 5.0059999999999993, 3.4180000000000006, 1.464,
 			0.24399999999999991, 6.8538461538461526, 3.0769230769230766,
@@ -193,5 +290,4 @@ void KmeansParallel::CompareTestResultsAgainstBaseline(float *centroidPosition) 
 	assert(error < maxError);
 	printf("OK!! Error agains baseline below threshold: %lf\n", error);
 }
-
 
