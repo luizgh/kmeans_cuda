@@ -11,6 +11,7 @@
 #include "kmeans_serial.h"
 #include "kmeans_parallel.h"
 
+void compareVectors(float * centroidPosition1, float * baseline, int nCentroids, int nDim);
 void InitializeCentroidsTest(float *dataX, float *centroidPosition,
 		int nCentroids, int nDim, int) {
 	//Initialize centroids with K random examples (Forgy's method)
@@ -38,14 +39,16 @@ void CompareTestResultsAgainstBaseline(float *centroidPosition, int nDim) {
 	int i;
 	float maxError = 1e-5;
 	float error = 0;
-	for (i = 0; i < nCentroids * nDim; i++)
-		error += fabs(centroidPosition[i] - baseline[i]);
+	for (i = 0; i < nCentroids * nDim; i++) {
+		error = fabs(centroidPosition[i] - baseline[i]);
+		assert(error < maxError);
+	}
 
-	assert(error < maxError);
 	printf("OK!! Error agains baseline below threshold: %lf\n", error);
 }
 
-int main() {
+void testExecutionOnIrisDataset()
+{
 	float *centroidPositions;
 	IrisDataset d;
 
@@ -54,9 +57,38 @@ int main() {
 	centroidPositions = kmeans.run(3);
 
 	CompareTestResultsAgainstBaseline(centroidPositions, d.nDim);
+}
 
+void testOneIteration()
+{
+	float *centroidPositions_parallel, *centroidPositions_serial;
+	IrisDataset d;
+
+	KmeansParallel kmeans_parallel (d.X, d.nExamples, d.nDim, true);
+	kmeans_parallel.setInitializeCentroidsFunction(InitializeCentroidsTest);
+	centroidPositions_parallel = kmeans_parallel.run(3, 1);
+
+	KmeansSerial kmeans_serial (d.X, d.nExamples, d.nDim, true);
+	kmeans_serial.setInitializeCentroidsFunction(InitializeCentroidsTest);
+	centroidPositions_serial = kmeans_serial.run(3, 1);
+
+	compareVectors(centroidPositions_parallel, centroidPositions_serial, 3, d.nDim);
 
 }
 
+int main() {
+	testOneIteration();
+}
 
+void compareVectors(float * centroidPosition1, float * baseline, int nCentroids, int nDim)
+{
+	int i;
+	float maxError = 1e-5;
+	float error = 0;
+	for (i = 0; i < nCentroids * nDim; i++)	{
+		error = fabs(centroidPosition1[i] - baseline[i]);
+		assert(error < maxError);
+	}
+			
+}
 

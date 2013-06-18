@@ -53,7 +53,7 @@ float* KmeansSerial::run(int nCentroids, int maxIter) {
 
 	changedFromLastIteration = 1;
 	int nIteration = 0;
-	while (changedFromLastIteration) {
+	while (changedFromLastIteration && (nIteration < maxIter || maxIter == -1)) {
 		nIteration++;
 		if (this->verbose)
 			printf("Starting iteration %d\n", nIteration);

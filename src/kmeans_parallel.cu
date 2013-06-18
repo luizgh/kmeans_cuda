@@ -75,6 +75,25 @@ void run_kmeans_parallel(float *d_dataX, float *d_centroidPosition,
 
 }
 
+__global__
+void update_centroids(float *d_centroidPosition,
+		float *d_runningSumOfExamplesPerCentroid,
+		int *d_numberOfExamplePerCentroid, int nCentroids, int nDim) {
+
+	int myExample = blockIdx.x * blockDim.x + threadIdx.x;
+
+	if (myExample < nCentroids)
+	{
+		int jDim;
+		for (jDim = 0; jDim < nDim; jDim++)
+			d_centroidPosition[myExample * nDim + jDim] =
+					d_runningSumOfExamplesPerCentroid[myExample * nDim
+							+ jDim]
+							/ d_numberOfExamplePerCentroid[myExample];
+	}
+
+}
+
 /*
 	changedFromLastIteration = 1;
 	int nIteration = 0;
@@ -135,7 +154,7 @@ int KmeansParallel::FindClosestCentroidsAndCheckForChanges() {
 	return changedFromLastIteration;
 }
 
-float* KmeansParallel::run(int nCentroids) {
+float* KmeansParallel::run(int nCentroids, int maxIter) {
 	this->nCentroids = nCentroids;
 	AllocateMemoryForCentroidVariables();
 
@@ -149,10 +168,14 @@ float* KmeansParallel::run(int nCentroids) {
 	int blockSize_1d = 512;
 	int gridSize_1d = nExamples / blockSize_1d + 1;
 
+	int gridSizeCentroids_1d = nCentroids / blockSize_1d + 1;
+
 	printf ("nExamples: %d; blockSize: %d; gridSize:%d\n", nExamples, blockSize_1d, gridSize_1d);
 
     const dim3 blockSize (blockSize_1d, 1, 1);
     const dim3 gridSize(gridSize_1d, 1, 1);
+
+    const dim3 gridSizeCentroids(gridSizeCentroids_1d, 1, 1);
 
 
 
@@ -160,6 +183,10 @@ float* KmeansParallel::run(int nCentroids) {
 			d_centroidAssignedToExample, d_runningSumOfExamplesPerCentroid, d_numberOfExamplePerCentroid, nExamples, nCentroids, nDim, d_changedSinceLastIteration);
 
 	cudaDeviceSynchronize();
+
+	update_centroids<<<gridSizeCentroids, blockSize>>> (d_centroidPosition,
+			d_runningSumOfExamplesPerCentroid, d_numberOfExamplePerCentroid,nCentroids, nDim);
+
 	checkCudaErrors(cudaGetLastError());
 
 	ClearfloatArray(centroidPosition, nCentroids * nDim);

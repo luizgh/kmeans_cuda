@@ -9,8 +9,8 @@ all: serial parallel
 serial: bin/run_kmeans_serial bin/test_kmeans_serial
 parallel: bin/run_kmeans_parallel bin/test_kmeans_parallel
 
-bin/test_kmeans_parallel: obj/test_kmeans_parallel.o obj/kmeans_parallel.o obj/cifar10_data.o obj/iris_data.o
-	$(NVCC) -o bin/test_kmeans_parallel obj/test_kmeans_parallel.o obj/kmeans_parallel.o obj/cifar10_data.o obj/iris_data.o $(NVCC_OPTS)
+bin/test_kmeans_parallel: obj/test_kmeans_parallel.o obj/kmeans_parallel.o obj/cifar10_data.o obj/iris_data.o obj/kmeans_serial.o
+	$(NVCC) -o bin/test_kmeans_parallel obj/test_kmeans_parallel.o obj/kmeans_parallel.o obj/cifar10_data.o obj/iris_data.o obj/kmeans_serial.o $(NVCC_OPTS)
 
 bin/test_kmeans_serial: obj/test_kmeans_serial.o obj/kmeans_serial.o obj/cifar10_data.o obj/iris_data.o
 	g++ -o bin/test_kmeans_serial obj/test_kmeans_serial.o obj/kmeans_serial.o obj/cifar10_data.o obj/iris_data.o $(GCC_OPTS)
