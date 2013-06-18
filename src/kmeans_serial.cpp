@@ -43,7 +43,7 @@ int KmeansSerial::FindClosestCentroidsAndCheckForChanges() {
 }
 
 
-float* KmeansSerial::run(int nCentroids) {
+float* KmeansSerial::run(int nCentroids, int maxIter) {
 	this->nCentroids = nCentroids;
 	int iExample, changedFromLastIteration;
 	AllocateMemoryForCentroidVariables();
