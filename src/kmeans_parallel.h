@@ -10,13 +10,14 @@
 
 class KmeansParallel {
 
-private:
+public:
 	bool verbose;
 	float *dataX;
 	float *centroidPosition;
 	int *centroidAssignedToExample;
 	float *runningSumOfExamplesPerCentroid;
 	int *numberOfExamplePerCentroid;
+	int changedSinceLastIteration;
 
 	float *d_dataX;
 	float *d_centroidPosition;

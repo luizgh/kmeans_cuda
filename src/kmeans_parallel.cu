@@ -17,6 +17,21 @@
 
 
 __global__
+void clear_vectors(float *d_runningSumOfExamplesPerCentroid,
+		int *d_numberOfExamplePerCentroid, int nCentroids, int nDim, int *d_changedSinceLastIteration )
+{
+	int myExample = blockIdx.x * blockDim.x + threadIdx.x;
+
+		if (myExample < nCentroids)
+		{
+			for (int i = 0; i < nDim; i++)
+				d_runningSumOfExamplesPerCentroid[myExample * nDim + i] = 0;
+			d_numberOfExamplePerCentroid[myExample] = 0;
+		}
+		*d_changedSinceLastIteration = 0;
+}
+
+__global__
 void run_kmeans_parallel(float *d_dataX, float *d_centroidPosition,
 		int *d_centroidAssignedToExample,
 		float *d_runningSumOfExamplesPerCentroid,
@@ -57,20 +72,7 @@ void run_kmeans_parallel(float *d_dataX, float *d_centroidPosition,
 
 	atomicAdd(&d_numberOfExamplePerCentroid[assignedCentroid], 1);
 	for (i = 0; i < nDim; i++) {
-		atomicAdd(&d_runningSumOfExamplesPerCentroid[assignedCentroid], d_dataX[myExample * nDim + i]);
-	}
-
-	//synchronize threads
-	__syncthreads();
-
-	if (myExample < nCentroids)
-	{
-		int jDim;
-		for (jDim = 0; jDim < nDim; jDim++)
-			d_centroidPosition[myExample * nDim + jDim] =
-					d_runningSumOfExamplesPerCentroid[myExample * nDim
-							+ jDim]
-							/ d_numberOfExamplePerCentroid[myExample];
+		atomicAdd(&d_runningSumOfExamplesPerCentroid[assignedCentroid * nDim + i], d_dataX[myExample * nDim + i]);
 	}
 
 }
@@ -177,21 +179,30 @@ float* KmeansParallel::run(int nCentroids, int maxIter) {
 
     const dim3 gridSizeCentroids(gridSizeCentroids_1d, 1, 1);
 
+    changedSinceLastIteration = 1;
+    int nIteration = 0;
+
+    while (changedSinceLastIteration && (nIteration < maxIter || maxIter == -1)) {
+    	printf ("Starting iteration %d:\n", nIteration);
+
+		clear_vectors<<<gridSizeCentroids, blockSize>>> (d_runningSumOfExamplesPerCentroid, d_numberOfExamplePerCentroid,nCentroids, nDim, d_changedSinceLastIteration);
 
 
-	run_kmeans_parallel<<<gridSize, blockSize>>> (d_dataX, d_centroidPosition,
-			d_centroidAssignedToExample, d_runningSumOfExamplesPerCentroid, d_numberOfExamplePerCentroid, nExamples, nCentroids, nDim, d_changedSinceLastIteration);
+		run_kmeans_parallel<<<gridSize, blockSize>>> (d_dataX, d_centroidPosition,
+				d_centroidAssignedToExample, d_runningSumOfExamplesPerCentroid, d_numberOfExamplePerCentroid, nExamples, nCentroids, nDim, d_changedSinceLastIteration);
 
-	cudaDeviceSynchronize();
+		cudaDeviceSynchronize();
 
-	update_centroids<<<gridSizeCentroids, blockSize>>> (d_centroidPosition,
-			d_runningSumOfExamplesPerCentroid, d_numberOfExamplePerCentroid,nCentroids, nDim);
+		update_centroids<<<gridSizeCentroids, blockSize>>> (d_centroidPosition,
+				d_runningSumOfExamplesPerCentroid, d_numberOfExamplePerCentroid,nCentroids, nDim);
 
-	checkCudaErrors(cudaGetLastError());
+		checkCudaErrors(cudaGetLastError());
 
-	ClearfloatArray(centroidPosition, nCentroids * nDim);
+		ClearfloatArray(centroidPosition, nCentroids * nDim);
 
-	CopyResultsFromGPU();
+		CopyResultsFromGPU();
+		nIteration ++;
+    }
 
 	printf("done\n");
 	printf("Centroids: \n");
@@ -234,6 +245,8 @@ void KmeansParallel::AllocateMemoryAndCopyVariablesToGPU() {
 
 void KmeansParallel::CopyResultsFromGPU(){
 	checkCudaErrors(cudaMemcpy(centroidPosition, d_centroidPosition, sizeof(float) * (nCentroids * nDim), cudaMemcpyDeviceToHost));
+	checkCudaErrors(cudaMemcpy(&changedSinceLastIteration, d_changedSinceLastIteration, sizeof(int) , cudaMemcpyDeviceToHost));
+
 }
 
 void KmeansParallel::ClearIntArray(int* vector, int size) {
@@ -307,7 +320,7 @@ void KmeansParallel::CompareTestResultsAgainstBaseline(
 			5.7153846153846146, 2.0538461538461532, 5.8836065573770497,
 			2.7409836065573772, 4.3885245901639349, 1.4344262295081966 };
 	int i;
-	float maxError = 1e-5;
+	float maxError = 1e-3;
 	float error = 0;
 	for (i = 0; i < nCentroids * nDim; i++)
 		error += fabs(centroidPosition[i] - baseline[i]);

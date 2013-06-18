@@ -12,6 +12,10 @@
 #include "kmeans_parallel.h"
 
 void compareVectors(float * centroidPosition1, float * baseline, int nCentroids, int nDim);
+void compareIntVectors(int * centroidAssignedtoExample1, int * baseline, int nExamples);
+void PrintVector(int *v, int size);
+void PrintVector(float *v, int size);
+
 void InitializeCentroidsTest(float *dataX, float *centroidPosition,
 		int nCentroids, int nDim, int) {
 	//Initialize centroids with K random examples (Forgy's method)
@@ -73,22 +77,48 @@ void testOneIteration()
 	centroidPositions_serial = kmeans_serial.run(3, 1);
 
 	compareVectors(centroidPositions_parallel, centroidPositions_serial, 3, d.nDim);
-
 }
 
 int main() {
 	testOneIteration();
+
+	testExecutionOnIrisDataset();
 }
 
 void compareVectors(float * centroidPosition1, float * baseline, int nCentroids, int nDim)
 {
 	int i;
-	float maxError = 1e-5;
+	float maxError = 1e-3;
 	float error = 0;
 	for (i = 0; i < nCentroids * nDim; i++)	{
 		error = fabs(centroidPosition1[i] - baseline[i]);
+		if (error >= maxError)
+			printf("NOK\nError in position i = %d. Values: %f and %f\n", i, centroidPosition1[i], baseline[i]);
 		assert(error < maxError);
 	}
 			
+}
+
+void PrintVector(int *v, int size)
+{
+	for (int i =0; i<size;i++)
+		printf("%d ",v[i]);
+}
+
+
+void PrintVector(float *v, int size)
+{
+	for (int i =0; i<size;i++)
+		printf("%f ",v[i]);
+}
+
+void compareIntVectors(int * centroidAssignedtoExample1, int * baseline, int nExamples)
+{
+	int i;
+
+	for (i = 0; i < nExamples; i++)	{
+		assert(centroidAssignedtoExample1[i] == baseline[i]);
+	}
+
 }
 

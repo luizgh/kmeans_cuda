@@ -10,7 +10,8 @@
 
 class KmeansSerial {
 
-private:
+	//TODO: switch back to private after tests
+public:
 	bool verbose;
 	float *dataX;
 
