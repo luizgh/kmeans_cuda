@@ -1,4 +1,4 @@
-#include <stdio.h>
+#include <cstdio>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
@@ -10,9 +10,10 @@
 #include "kmeans.h"
 #include "kmeans_parallel.h"
 #include "kmeans_serial.h"
+#include <algorithm>
 
 int main(int argc, char **argv) {
-	srand(time(NULL));
+    std::srand(std::time(0));
 
 	if(argc <= 2 || argc > 3) 	{
 		printf("Usage: %s <iris|cifar> <nCentroids>\n", argv[0]);

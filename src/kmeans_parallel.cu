@@ -14,6 +14,7 @@
 #include "utils.h"
 #include "kmeans.h"
 #include "kmeans_parallel.h"
+#include <algorithm>
 
 
 __global__
@@ -264,11 +265,20 @@ void KmeansParallel::ClearfloatArray(float* vector, int size) {
 void KmeansParallel::InitializeCentroids(float *dataX, float *centroidPosition,
 		int nCentroids, int nDim, int nExamples) {
 	//Initialize centroids with K random examples (Forgy's method)
-	int i;
+
+    int *randomVector;
+    int i;
+
+    randomVector = (int*) malloc (sizeof(int) * nExamples);
+    for (int i =0; i< nExamples;i++)
+    	randomVector[i] = i;
+
+    std::random_shuffle(randomVector, randomVector+100);
+
 	printf("Centroids initialized with examples: ");
 	int selectedExample;
 	for (i = 0; i < nCentroids; i++) {
-		selectedExample = rand() % nExamples;
+		selectedExample = randomVector[i];
 		printf("%d ", selectedExample);
 		centroidPosition[i * nDim + 0] = dataX[selectedExample * nDim + 0];
 		centroidPosition[i * nDim + 1] = dataX[selectedExample * nDim + 1];

@@ -46,6 +46,7 @@ void CompareTestResultsAgainstBaseline(float *centroidPosition, int nDim) {
 }
 
 int main() {
+
 	float *centroidPositions;
 	IrisDataset d;
 
