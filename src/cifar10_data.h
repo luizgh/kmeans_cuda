@@ -17,6 +17,7 @@ private:
 	void processBatch(int batchNumber);
 public:
 	Cifar10Dataset_1batch();
+	~Cifar10Dataset_1batch();
 	float *X;
 	int *y;
 	static const int nExamples = 10000;

@@ -139,6 +139,16 @@ KmeansParallel::KmeansParallel(float *data, int nExamples, int nDim,
 	this->nDim = nDim;
 	this->verbose = verbose;
 	this->initializeCentroidsFunction = &InitializeCentroids;
+	centroidPosition = 0;
+}
+
+KmeansParallel::~KmeansParallel() {
+	if (centroidPosition) //if executed
+	{
+		FreeHostMemory();
+		FreeGPUMemory();
+	}
+
 }
 
 void KmeansParallel::setInitializeCentroidsFunction(initFunction fun) {
@@ -189,6 +199,8 @@ float* KmeansParallel::run(int nCentroids, int maxIter) {
 		clear_vectors<<<gridSizeCentroids, blockSize>>> (d_runningSumOfExamplesPerCentroid, d_numberOfExamplePerCentroid,nCentroids, nDim, d_changedSinceLastIteration);
 
 
+		cudaDeviceSynchronize();
+
 		run_kmeans_parallel<<<gridSize, blockSize>>> (d_dataX, d_centroidPosition,
 				d_centroidAssignedToExample, d_runningSumOfExamplesPerCentroid, d_numberOfExamplePerCentroid, nExamples, nCentroids, nDim, d_changedSinceLastIteration);
 
@@ -197,6 +209,7 @@ float* KmeansParallel::run(int nCentroids, int maxIter) {
 		update_centroids<<<gridSizeCentroids, blockSize>>> (d_centroidPosition,
 				d_runningSumOfExamplesPerCentroid, d_numberOfExamplePerCentroid,nCentroids, nDim);
 
+		cudaDeviceSynchronize();
 		checkCudaErrors(cudaGetLastError());
 
 		ClearfloatArray(centroidPosition, nCentroids * nDim);
@@ -244,6 +257,23 @@ void KmeansParallel::AllocateMemoryAndCopyVariablesToGPU() {
 			cudaMemcpy(d_dataX, dataX, sizeof(float) * (nExamples * nDim), cudaMemcpyHostToDevice));
 }
 
+void KmeansParallel::FreeHostMemory() {
+	free(centroidPosition);
+	free(centroidAssignedToExample);
+	free(runningSumOfExamplesPerCentroid);
+	free(numberOfExamplePerCentroid);
+}
+
+void KmeansParallel::FreeGPUMemory() {
+	printf("Freeing up GPU memory");
+	checkCudaErrors(cudaFree(d_dataX));
+	checkCudaErrors(cudaFree(d_centroidPosition));
+	checkCudaErrors(cudaFree(d_centroidAssignedToExample));
+	checkCudaErrors(cudaFree(d_runningSumOfExamplesPerCentroid));
+	checkCudaErrors(cudaFree(d_numberOfExamplePerCentroid));
+	checkCudaErrors(cudaFree(d_changedSinceLastIteration));
+}
+
 void KmeansParallel::CopyResultsFromGPU(){
 	checkCudaErrors(cudaMemcpy(centroidPosition, d_centroidPosition, sizeof(float) * (nCentroids * nDim), cudaMemcpyDeviceToHost));
 	checkCudaErrors(cudaMemcpy(&changedSinceLastIteration, d_changedSinceLastIteration, sizeof(int) , cudaMemcpyDeviceToHost));
@@ -265,25 +295,28 @@ void KmeansParallel::ClearfloatArray(float* vector, int size) {
 void KmeansParallel::InitializeCentroids(float *dataX, float *centroidPosition,
 		int nCentroids, int nDim, int nExamples) {
 	//Initialize centroids with K random examples (Forgy's method)
+
     int *randomVector;
-    int i, j ;
+    int i;
 
     randomVector = (int*) malloc (sizeof(int) * nExamples);
     for (int i =0; i< nExamples;i++)
     	randomVector[i] = i;
 
-    std::random_shuffle(randomVector, randomVector+ nExamples);
+    std::random_shuffle(randomVector, randomVector+100);
 
 	printf("Centroids initialized with examples: ");
 	int selectedExample;
 	for (i = 0; i < nCentroids; i++) {
 		selectedExample = randomVector[i];
 		printf("%d ", selectedExample);
-		for (j = 0; j < nDim; j++)
-			centroidPosition[i * nDim + j] = dataX[selectedExample * nDim + j];
+		centroidPosition[i * nDim + 0] = dataX[selectedExample * nDim + 0];
+		centroidPosition[i * nDim + 1] = dataX[selectedExample * nDim + 1];
+		centroidPosition[i * nDim + 2] = dataX[selectedExample * nDim + 2];
+		centroidPosition[i * nDim + 3] = dataX[selectedExample * nDim + 3];
 	}
 	printf("\n");
-
+	free(randomVector);
 }
 
 float KmeansParallel::CalculateDistance(float *dataX, float *centroidPosition,

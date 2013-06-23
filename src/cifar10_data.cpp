@@ -7,6 +7,11 @@ Cifar10Dataset_1batch::Cifar10Dataset_1batch(){
 	load_cifar_data_from_batches();
 }
 
+Cifar10Dataset_1batch::~Cifar10Dataset_1batch(){
+	free(X);
+	free(y);
+}
+
 int Cifar10Dataset_1batch::load_cifar_data_from_batches()
 //Expected:
 //filename: string pointing to the flat file with iris data

@@ -15,6 +15,10 @@ IrisDataset::IrisDataset() {
 	assert(load_iris_data_from_file("iris.data"));
 }
 
+IrisDataset::~IrisDataset() {
+	free(X);
+	free(y);
+}
 
 int IrisDataset::load_iris_data_from_file(const char *filename)
 //Expected:

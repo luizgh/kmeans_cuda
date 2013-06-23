@@ -14,6 +14,7 @@ private:
 	int load_iris_data_from_file(const char *filename);
 public:
 	IrisDataset();
+	~IrisDataset();
 	float *X;
 	int *y;
 	static const int nExamples = 150;

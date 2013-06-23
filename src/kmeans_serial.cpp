@@ -125,21 +125,23 @@ void KmeansSerial::InitializeCentroids(float *dataX, float *centroidPosition,
 		int nCentroids, int nDim, int nExamples) {
 	//Initialize centroids with K random examples (Forgy's method)
     int *randomVector;
-    int i, j ;
+    int i;
 
     randomVector = (int*) malloc (sizeof(int) * nExamples);
     for (int i =0; i< nExamples;i++)
     	randomVector[i] = i;
 
-    std::random_shuffle(randomVector, randomVector+nExamples);
+    std::random_shuffle(randomVector, randomVector+100);
 
 	printf("Centroids initialized with examples: ");
 	int selectedExample;
 	for (i = 0; i < nCentroids; i++) {
 		selectedExample = randomVector[i];
 		printf("%d ", selectedExample);
-		for (j = 0; j < nDim; j++)
-			centroidPosition[i * nDim + j] = dataX[selectedExample * nDim + j];
+		centroidPosition[i * nDim + 0] = dataX[selectedExample * nDim + 0];
+		centroidPosition[i * nDim + 1] = dataX[selectedExample * nDim + 1];
+		centroidPosition[i * nDim + 2] = dataX[selectedExample * nDim + 2];
+		centroidPosition[i * nDim + 3] = dataX[selectedExample * nDim + 3];
 	}
 	printf("\n");
 
@@ -153,7 +155,8 @@ float KmeansSerial::CalculateDistance(float *dataX, float *centroidPosition, int
 	float sum = 0;
 	float currentVal;
 	for (i = 0; i < nDim; i++) {
-		currentVal = centroidPosition[jCentroid * nDim + i] - dataX[iExample * nDim + i];
+		currentVal = centroidPosition[jCentroid * nDim + i]
+				- dataX[iExample * nDim + i];
 		sum += currentVal * currentVal;
 	}
 	return sqrt(sum);

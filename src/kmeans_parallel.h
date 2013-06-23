@@ -43,9 +43,12 @@ public:
 	float CalculateDistance(float *dataX, float *centroidPosition, int iExample,int jCentroid);
 	int GetClosestCentroid(int iExample);
 	void CompareTestResultsAgainstBaseline(float *centroidPosition);
+	void FreeHostMemory();
+	void FreeGPUMemory();
 
 public:
 	KmeansParallel(float *data, int nExamples, int nDim, bool verbose = false);
+	~KmeansParallel();
 	void setInitializeCentroidsFunction(initFunction fun);
 	float* run(int nCentroids, int maxIter = -1);
 };
