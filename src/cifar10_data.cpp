@@ -23,11 +23,10 @@ int Cifar10Dataset_1batch::load_cifar_data_from_batches()
 
 	//We only load the first batch due to memory limitations on the GPU
 	int i;
-	processBatch(1);
 	//TODO process all batches
-	/*for (i=1; i<=5; i++)
+	for (i=1; i<=5; i++)
 		processBatch(i);
-	 */
+
 	return 1;
 }
 

@@ -211,6 +211,12 @@ void KmeansParallel::AllocateMemoryForCentroidVariables() {
 }
 
 void KmeansParallel::AllocateMemoryAndCopyVariablesToGPU() {
+
+	printf("total_memory = %lu\n", sizeof(float) * nExamples * nDim + sizeof(float) * (nCentroids * nDim) + sizeof(int) * nExamples +
+			sizeof(float) * (nCentroids * nDim) + sizeof(int) * nCentroids + sizeof(int));
+
+
+
 	checkCudaErrors(cudaMalloc(&d_dataX, sizeof(float) * nExamples * nDim ));
 	checkCudaErrors(
 			cudaMalloc(&d_centroidPosition, sizeof(float) * (nCentroids * nDim)));

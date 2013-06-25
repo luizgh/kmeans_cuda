@@ -20,7 +20,7 @@ public:
 	~Cifar10Dataset_1batch();
 	float *X;
 	int *y;
-	static const int nExamples = 10000;
+	static const int nExamples = 50000;
 	static const int nDim = 3072;
 
 };
