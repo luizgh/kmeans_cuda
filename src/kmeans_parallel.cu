@@ -97,40 +97,6 @@ void update_centroids(float *d_centroidPosition,
 
 }
 
-/*
-	changedFromLastIteration = 1;
-	int nIteration = 0;
-	while (changedFromLastIteration) {
-		nIteration++;
-		if (this->verbose)
-			printf("Starting iteration %d\n", nIteration);
-
-
-		//Update centroid location
-		ClearIntArray(numberOfExamplePerCentroid, nCentroids);
-		ClearfloatArray(runningSumOfExamplesPerCentroid, nCentroids * nDim);
-
-		int currentCentroid;
-		for (iExample = 0; iExample < nExamples; iExample++) {
-			currentCentroid = centroidAssignedToExample[iExample];
-			numberOfExamplePerCentroid[currentCentroid]++;
-			int jDim;
-			for (jDim = 0; jDim < nDim; jDim++)
-				runningSumOfExamplesPerCentroid[currentCentroid * nDim + jDim] +=
-						dataX[iExample * nDim + jDim];
-		}
-		for (currentCentroid = 0; currentCentroid < nCentroids;
-				currentCentroid++) {
-			int jDim;
-			for (jDim = 0; jDim < nDim; jDim++)
-				centroidPosition[currentCentroid * nDim + jDim] =
-						runningSumOfExamplesPerCentroid[currentCentroid * nDim
-								+ jDim]
-								/ numberOfExamplePerCentroid[currentCentroid];
-		}
-
-	}*/
-
 
 KmeansParallel::KmeansParallel(float *data, int nExamples, int nDim,
 		bool verbose) {
@@ -193,18 +159,21 @@ float* KmeansParallel::run(int nCentroids, int maxIter) {
     changedSinceLastIteration = 1;
     int nIteration = 0;
 
-    while (changedSinceLastIteration && (nIteration < maxIter || maxIter == -1)) {
+    while (changedSinceLastIteration &&
+    		(nIteration < maxIter || maxIter == -1)) {
     	printf ("Starting iteration %d:\n", nIteration);
 
 		clear_vectors<<<gridSizeCentroids, blockSize>>> (d_runningSumOfExamplesPerCentroid, d_numberOfExamplePerCentroid,nCentroids, nDim, d_changedSinceLastIteration);
 
 
 		cudaDeviceSynchronize();
+		checkCudaErrors(cudaGetLastError());
 
 		run_kmeans_parallel<<<gridSize, blockSize>>> (d_dataX, d_centroidPosition,
 				d_centroidAssignedToExample, d_runningSumOfExamplesPerCentroid, d_numberOfExamplePerCentroid, nExamples, nCentroids, nDim, d_changedSinceLastIteration);
 
 		cudaDeviceSynchronize();
+		checkCudaErrors(cudaGetLastError());
 
 		update_centroids<<<gridSizeCentroids, blockSize>>> (d_centroidPosition,
 				d_runningSumOfExamplesPerCentroid, d_numberOfExamplePerCentroid,nCentroids, nDim);
@@ -212,11 +181,14 @@ float* KmeansParallel::run(int nCentroids, int maxIter) {
 		cudaDeviceSynchronize();
 		checkCudaErrors(cudaGetLastError());
 
-		ClearfloatArray(centroidPosition, nCentroids * nDim);
+		CopyCompletionFlagFromGPU();
 
-		CopyResultsFromGPU();
+		if (nIteration == 0)
+			changedSinceLastIteration = true;
+
 		nIteration ++;
     }
+    CopyResultsFromGPU();
 
 	printf("done\n");
 	printf("Centroids: \n");
@@ -265,7 +237,6 @@ void KmeansParallel::FreeHostMemory() {
 }
 
 void KmeansParallel::FreeGPUMemory() {
-	printf("Freeing up GPU memory");
 	checkCudaErrors(cudaFree(d_dataX));
 	checkCudaErrors(cudaFree(d_centroidPosition));
 	checkCudaErrors(cudaFree(d_centroidAssignedToExample));
@@ -274,10 +245,12 @@ void KmeansParallel::FreeGPUMemory() {
 	checkCudaErrors(cudaFree(d_changedSinceLastIteration));
 }
 
+void KmeansParallel::CopyCompletionFlagFromGPU(){
+	checkCudaErrors(cudaMemcpy(&changedSinceLastIteration, d_changedSinceLastIteration, sizeof(int) , cudaMemcpyDeviceToHost));
+}
+
 void KmeansParallel::CopyResultsFromGPU(){
 	checkCudaErrors(cudaMemcpy(centroidPosition, d_centroidPosition, sizeof(float) * (nCentroids * nDim), cudaMemcpyDeviceToHost));
-	checkCudaErrors(cudaMemcpy(&changedSinceLastIteration, d_changedSinceLastIteration, sizeof(int) , cudaMemcpyDeviceToHost));
-
 }
 
 void KmeansParallel::ClearIntArray(int* vector, int size) {

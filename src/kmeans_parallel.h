@@ -43,6 +43,7 @@ public:
 	float CalculateDistance(float *dataX, float *centroidPosition, int iExample,int jCentroid);
 	int GetClosestCentroid(int iExample);
 	void CompareTestResultsAgainstBaseline(float *centroidPosition);
+	void CopyCompletionFlagFromGPU();
 	void FreeHostMemory();
 	void FreeGPUMemory();
 
