@@ -71,6 +71,19 @@ void run_kmeans_parallel(float *d_dataX, float *d_centroidPosition,
 
 	d_centroidAssignedToExample[myExample] = assignedCentroid;
 
+
+}
+
+__global__
+void aggregate_centroid_locations(float *d_runningSumOfExamplesPerCentroid,
+		int *d_numberOfExamplePerCentroid, int *d_centroidAssignedToExample, float *d_dataX, int nDim, int nExamples)
+{
+	int myExample = blockIdx.x * blockDim.x + threadIdx.x;
+	if (myExample >= nExamples)
+		return;
+
+	int assignedCentroid = d_centroidAssignedToExample[myExample];
+	int i;
 	atomicAdd(&d_numberOfExamplePerCentroid[assignedCentroid], 1);
 	for (i = 0; i < nDim; i++) {
 		atomicAdd(&d_runningSumOfExamplesPerCentroid[assignedCentroid * nDim + i], d_dataX[myExample * nDim + i]);
@@ -165,12 +178,17 @@ float* KmeansParallel::run(int nCentroids, int maxIter) {
 
 		clear_vectors<<<gridSizeCentroids, blockSize>>> (d_runningSumOfExamplesPerCentroid, d_numberOfExamplePerCentroid,nCentroids, nDim, d_changedSinceLastIteration);
 
+		cudaDeviceSynchronize();
+		checkCudaErrors(cudaGetLastError());
+
+
+		run_kmeans_parallel<<<gridSize, blockSize>>> (d_dataX, d_centroidPosition,
+				d_centroidAssignedToExample, d_runningSumOfExamplesPerCentroid, d_numberOfExamplePerCentroid, nExamples, nCentroids, nDim, d_changedSinceLastIteration);
 
 		cudaDeviceSynchronize();
 		checkCudaErrors(cudaGetLastError());
 
-		run_kmeans_parallel<<<gridSize, blockSize>>> (d_dataX, d_centroidPosition,
-				d_centroidAssignedToExample, d_runningSumOfExamplesPerCentroid, d_numberOfExamplePerCentroid, nExamples, nCentroids, nDim, d_changedSinceLastIteration);
+		aggregate_centroid_locations<<<gridSize, blockSize>>> (d_runningSumOfExamplesPerCentroid, d_numberOfExamplePerCentroid, d_centroidAssignedToExample, d_dataX, nDim, nExamples);
 
 		cudaDeviceSynchronize();
 		checkCudaErrors(cudaGetLastError());

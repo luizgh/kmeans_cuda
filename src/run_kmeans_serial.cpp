@@ -13,7 +13,12 @@
 #include <algorithm>
 
 int main(int argc, char **argv) {
-    std::srand(std::time(0));
+	#ifdef NDEBUG
+	std::srand(0);
+	#else
+	std::srand(std::time(0));
+	#endif
+
 
 	if(argc <= 2 || argc > 3) 	{
 		printf("Usage: %s <iris|cifar> <nCentroids>\n", argv[0]);
