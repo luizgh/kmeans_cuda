@@ -20,23 +20,27 @@ int main(int argc, char **argv) {
 	#endif
 
 
-	if(argc <= 2 || argc > 3) 	{
-		printf("Usage: %s <iris|cifar> <nCentroids>\n", argv[0]);
+	if(argc <= 2 || argc > 4) 	{
+		printf("Usage: %s <iris|cifar> <nCentroids> <maxiter>\n", argv[0]);
 		return 1;
 	}
+	int maxIter = -1;
+	if (argc >3)
+		maxIter = atoi(argv[3]);
+
 	int nCentroids = atoi(argv[2]);
 
 	if (strcmp(argv[1], "iris") == 0)
 	{
 		IrisDataset d;
 		KmeansSerial kmeans (d.X, d.nExamples, d.nDim, true);
-		kmeans.run(nCentroids);
+		kmeans.run(nCentroids, maxIter);
 	}
 	else if (strcmp(argv[1], "cifar") == 0)
 	{
 		Cifar10Dataset_1batch d;
 		KmeansSerial kmeans (d.X, d.nExamples, d.nDim, true);
-		kmeans.run(nCentroids);
+		kmeans.run(nCentroids, maxIter);
 	}
 	else
 		printf("Usage: %s <iris|cifar> <nCentroids>\n", argv[0]);
