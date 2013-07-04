@@ -14,7 +14,7 @@
 
 int main(int argc, char **argv) {
 
-	#ifdef NDEBUG
+	#ifdef FIXSEED
 	std::srand(0);
 	#else
 	std::srand(std::time(0));

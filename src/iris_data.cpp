@@ -12,7 +12,8 @@
 static char iris_classes[3][20] = {"Iris-setosa", "Iris-versicolor", "Iris-virginica"};
 
 IrisDataset::IrisDataset() {
-	assert(load_iris_data_from_file("iris.data"));
+	int result = load_iris_data_from_file("iris.data");
+	assert(result);
 }
 
 IrisDataset::~IrisDataset() {
@@ -30,6 +31,7 @@ int IrisDataset::load_iris_data_from_file(const char *filename)
 	y = (int*) malloc (sizeof(int) * (nExamples));
 
 	FILE *file = fopen(filename,"r");
+
 	if (!file) return 0;
 
 	char line[256];
