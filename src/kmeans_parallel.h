@@ -26,6 +26,8 @@ public:
 	int *d_numberOfExamplePerCentroid;
 	int* d_changedSinceLastIteration;
 
+	float *d_distanceExampleCentroid;
+
 
 	int nExamples;
 	int nDim;
