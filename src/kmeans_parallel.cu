@@ -363,21 +363,3 @@ int KmeansParallel::GetClosestCentroid(int iExample) {
 	assert(assignedCentroid != -1);
 	return assignedCentroid;
 }
-
-void KmeansParallel::CompareTestResultsAgainstBaseline(
-		float *centroidPosition) {
-	int nCentroids = 3;
-	float baseline[] = { 5.0059999999999993, 3.4180000000000006, 1.464,
-			0.24399999999999991, 6.8538461538461526, 3.0769230769230766,
-			5.7153846153846146, 2.0538461538461532, 5.8836065573770497,
-			2.7409836065573772, 4.3885245901639349, 1.4344262295081966 };
-	int i;
-	float maxError = 1e-3;
-	float error = 0;
-	for (i = 0; i < nCentroids * nDim; i++)
-		error += fabs(centroidPosition[i] - baseline[i]);
-
-	assert(error < maxError);
-	printf("OK!! Error agains baseline below threshold: %lf\n", error);
-}
-
