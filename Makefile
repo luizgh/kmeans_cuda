@@ -18,8 +18,8 @@ bin/test_kmeans_serial: obj/test_kmeans_serial.o obj/kmeans_serial.o obj/cifar10
 bin/run_kmeans_serial: obj/run_kmeans_serial.o obj/kmeans_serial.o obj/cifar10_data.o obj/iris_data.o
 	g++ -o bin/run_kmeans_serial obj/run_kmeans_serial.o obj/kmeans_serial.o obj/cifar10_data.o obj/iris_data.o $(GCC_OPTS)
 
-bin/run_kmeans_parallel: obj/run_kmeans_parallel.o obj/kmeans_parallel.o obj/cifar10_data.o obj/iris_data.o
-	$(NVCC) -o bin/run_kmeans_parallel obj/run_kmeans_parallel.o obj/kmeans_parallel.o obj/cifar10_data.o obj/iris_data.o $(NVCC_OPTS)
+bin/run_kmeans_parallel: obj/run_kmeans_parallel.o obj/kmeans_parallel.o obj/cifar10_data.o obj/iris_data.o obj/cudaTimer.o
+	$(NVCC) -o bin/run_kmeans_parallel obj/run_kmeans_parallel.o obj/kmeans_parallel.o obj/cifar10_data.o obj/iris_data.o obj/cudaTimer.o $(NVCC_OPTS)
 
 obj/run_kmeans_serial.o: src/run_kmeans_serial.cpp
 	g++ -c -o obj/run_kmeans_serial.o src/run_kmeans_serial.cpp $(GCC_OPTS)
@@ -45,5 +45,7 @@ obj/cifar10_data.o: src/cifar10_data.cpp src/cifar10_data.h
 obj/iris_data.o: src/iris_data.cpp src/iris_data.h
 	g++ -c -o obj/iris_data.o src/iris_data.cpp $(GCC_OPTS)
 
+obj/cudaTimer.o: src/cudaTimer.cpp src/cudaTimer.h
+	$(NVCC) -c -o obj/cudaTimer.o src/cudaTimer.cpp $(NVCC_OPTS)
 clean:
 	rm -f obj/*.o bin/run_kmeans_parallel bin/run_kmeans_serial bin/test_kmeans
