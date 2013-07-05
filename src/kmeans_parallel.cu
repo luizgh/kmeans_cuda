@@ -111,42 +111,6 @@ void update_centroids(float *d_centroidPosition,
 
 }
 
-
-KmeansParallel::KmeansParallel(float *data, int nExamples, int nDim,
-		bool verbose) {
-	this->dataX = data;
-	this->nExamples = nExamples;
-	this->nDim = nDim;
-	this->verbose = verbose;
-	this->initializeCentroidsFunction = &InitializeCentroids;
-	centroidPosition = 0;
-}
-
-KmeansParallel::~KmeansParallel() {
-	if (centroidPosition) //if executed
-	{
-		FreeHostMemory();
-		FreeGPUMemory();
-	}
-
-}
-
-void KmeansParallel::setInitializeCentroidsFunction(initFunction fun) {
-	initializeCentroidsFunction = fun;
-}
-
-int KmeansParallel::FindClosestCentroidsAndCheckForChanges() {
-	//Find closest centroids
-	int changedFromLastIteration = 0;
-	for (int iExample = 0; iExample < nExamples; iExample++) {
-		int closestCentroid = GetClosestCentroid(iExample);
-		if (closestCentroid != centroidAssignedToExample[iExample])
-			changedFromLastIteration = 1;
-		centroidAssignedToExample[iExample] = closestCentroid;
-	}
-	return changedFromLastIteration;
-}
-
 float* KmeansParallel::run(int nCentroids, int maxIter) {
 	this->nCentroids = nCentroids;
 	AllocateMemoryForCentroidVariables();
@@ -186,43 +150,26 @@ float* KmeansParallel::run(int nCentroids, int maxIter) {
     	printf ("Starting iteration %d:\n", nIteration);
 
     	cudaTimer.start();
-
 		clear_vectors<<<gridSizeCentroids, blockSize>>> (d_runningSumOfExamplesPerCentroid, d_numberOfExamplePerCentroid,nCentroids, nDim, d_changedSinceLastIteration);
-
-		cudaDeviceSynchronize();
-		checkCudaErrors(cudaGetLastError());
-
+		syncAndCheckErrors();
 		totalTimeInClearVectorsKernel += cudaTimer.stop();
 
 		cudaTimer.start();
-
 		run_kmeans_parallel<<<gridSize, blockSize>>> (d_dataX, d_centroidPosition,
 				d_centroidAssignedToExample, d_runningSumOfExamplesPerCentroid, d_numberOfExamplePerCentroid, nExamples, nCentroids, nDim, d_changedSinceLastIteration);
-
-		cudaDeviceSynchronize();
-		checkCudaErrors(cudaGetLastError());
-
+		syncAndCheckErrors();
 		totalTimeInMainKernel += cudaTimer.stop();
 
 		cudaTimer.start();
-
 		aggregate_centroid_locations<<<gridSize, blockSize>>> (d_runningSumOfExamplesPerCentroid, d_numberOfExamplePerCentroid, d_centroidAssignedToExample, d_dataX, nDim, nExamples);
-
-		cudaDeviceSynchronize();
-		checkCudaErrors(cudaGetLastError());
-
+		syncAndCheckErrors();
 		totalTimeInAggregateCentroidsKernel += cudaTimer.stop();
 
 		cudaTimer.start();
-
 		update_centroids<<<gridSizeCentroids, blockSize>>> (d_centroidPosition,
 				d_runningSumOfExamplesPerCentroid, d_numberOfExamplePerCentroid,nCentroids, nDim);
-
-		cudaDeviceSynchronize();
-		checkCudaErrors(cudaGetLastError());
-
+		syncAndCheckErrors();
 		totalTimeInUpdateCentroidsKernel += cudaTimer.stop();
-
 
 		CopyCompletionFlagFromGPU();
 
@@ -252,6 +199,48 @@ float* KmeansParallel::run(int nCentroids, int maxIter) {
 	fflush(stdout);
 	return centroidPosition;
 }
+
+
+KmeansParallel::KmeansParallel(float *data, int nExamples, int nDim,
+		bool verbose) {
+	this->dataX = data;
+	this->nExamples = nExamples;
+	this->nDim = nDim;
+	this->verbose = verbose;
+	this->initializeCentroidsFunction = &InitializeCentroids;
+	centroidPosition = 0;
+}
+
+KmeansParallel::~KmeansParallel() {
+	if (centroidPosition) //if executed
+	{
+		FreeHostMemory();
+		FreeGPUMemory();
+	}
+
+}
+
+void KmeansParallel::setInitializeCentroidsFunction(initFunction fun) {
+	initializeCentroidsFunction = fun;
+}
+
+int KmeansParallel::FindClosestCentroidsAndCheckForChanges() {
+	//Find closest centroids
+	int changedFromLastIteration = 0;
+	for (int iExample = 0; iExample < nExamples; iExample++) {
+		int closestCentroid = GetClosestCentroid(iExample);
+		if (closestCentroid != centroidAssignedToExample[iExample])
+			changedFromLastIteration = 1;
+		centroidAssignedToExample[iExample] = closestCentroid;
+	}
+	return changedFromLastIteration;
+}
+
+void KmeansParallel::syncAndCheckErrors() {
+	cudaDeviceSynchronize();
+	checkCudaErrors (cudaGetLastError());}
+
+
 
 void KmeansParallel::AllocateMemoryForCentroidVariables() {
 	//Allocate memory for centroid variables

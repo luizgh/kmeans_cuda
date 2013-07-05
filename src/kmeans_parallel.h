@@ -52,6 +52,9 @@ public:
 	~KmeansParallel();
 	void setInitializeCentroidsFunction(initFunction fun);
 	float* run(int nCentroids, int maxIter = -1);
+
+private:
+	void syncAndCheckErrors();
 };
 
 
