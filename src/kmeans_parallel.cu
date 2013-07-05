@@ -15,6 +15,7 @@
 #include "kmeans.h"
 #include "kmeans_parallel.h"
 #include <algorithm>
+#include "cudaTimer.h"
 
 
 __global__
@@ -172,36 +173,28 @@ float* KmeansParallel::run(int nCentroids, int maxIter) {
     changedSinceLastIteration = 1;
     int nIteration = 0;
 
-    cudaEvent_t start, stop;
-    float time;
     float totalTimeInMainKernel = 0;
     float totalTimeInClearVectorsKernel = 0;
     float totalTimeInAggregateCentroidsKernel = 0;
     float totalTimeInUpdateCentroidsKernel = 0;
 
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
+    CudaTimer cudaTimer;
 
 
     while (changedSinceLastIteration &&
     		(nIteration < maxIter || maxIter == -1)) {
     	printf ("Starting iteration %d:\n", nIteration);
 
-	    cudaEventRecord( start, 0 );
+    	cudaTimer.start();
 
 		clear_vectors<<<gridSizeCentroids, blockSize>>> (d_runningSumOfExamplesPerCentroid, d_numberOfExamplePerCentroid,nCentroids, nDim, d_changedSinceLastIteration);
 
 		cudaDeviceSynchronize();
 		checkCudaErrors(cudaGetLastError());
 
-		cudaEventRecord( stop, 0 );
-		cudaEventSynchronize( stop );
+		totalTimeInClearVectorsKernel += cudaTimer.stop();
 
-		cudaEventElapsedTime( &time, start, stop );
-		totalTimeInClearVectorsKernel += time;
-
-
-	    cudaEventRecord( start, 0 );
+		cudaTimer.start();
 
 		run_kmeans_parallel<<<gridSize, blockSize>>> (d_dataX, d_centroidPosition,
 				d_centroidAssignedToExample, d_runningSumOfExamplesPerCentroid, d_numberOfExamplePerCentroid, nExamples, nCentroids, nDim, d_changedSinceLastIteration);
@@ -209,26 +202,18 @@ float* KmeansParallel::run(int nCentroids, int maxIter) {
 		cudaDeviceSynchronize();
 		checkCudaErrors(cudaGetLastError());
 
-		cudaEventRecord( stop, 0 );
-		cudaEventSynchronize( stop );
+		totalTimeInMainKernel += cudaTimer.stop();
 
-		cudaEventElapsedTime( &time, start, stop );
-		totalTimeInMainKernel += time;
-
-		cudaEventRecord( start, 0 );
+		cudaTimer.start();
 
 		aggregate_centroid_locations<<<gridSize, blockSize>>> (d_runningSumOfExamplesPerCentroid, d_numberOfExamplePerCentroid, d_centroidAssignedToExample, d_dataX, nDim, nExamples);
 
 		cudaDeviceSynchronize();
 		checkCudaErrors(cudaGetLastError());
 
-		cudaEventRecord( stop, 0 );
-		cudaEventSynchronize( stop );
+		totalTimeInAggregateCentroidsKernel += cudaTimer.stop();
 
-		cudaEventElapsedTime( &time, start, stop );
-		totalTimeInAggregateCentroidsKernel += time;
-
-		cudaEventRecord( start, 0 );
+		cudaTimer.start();
 
 		update_centroids<<<gridSizeCentroids, blockSize>>> (d_centroidPosition,
 				d_runningSumOfExamplesPerCentroid, d_numberOfExamplePerCentroid,nCentroids, nDim);
@@ -236,11 +221,7 @@ float* KmeansParallel::run(int nCentroids, int maxIter) {
 		cudaDeviceSynchronize();
 		checkCudaErrors(cudaGetLastError());
 
-		cudaEventRecord( stop, 0 );
-		cudaEventSynchronize( stop );
-
-		cudaEventElapsedTime( &time, start, stop );
-		totalTimeInUpdateCentroidsKernel += time;
+		totalTimeInUpdateCentroidsKernel += cudaTimer.stop();
 
 
 		CopyCompletionFlagFromGPU();
@@ -252,8 +233,6 @@ float* KmeansParallel::run(int nCentroids, int maxIter) {
     }
 
 
-    cudaEventDestroy( start );
-    cudaEventDestroy( stop );
 
     CopyResultsFromGPU();
 
