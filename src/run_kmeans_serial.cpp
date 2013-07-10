@@ -10,6 +10,7 @@
 #include "kmeans.h"
 #include "kmeans_parallel.h"
 #include "kmeans_serial.h"
+#include "wine_data.h"
 #include <algorithm>
 
 int main(int argc, char **argv) {
@@ -39,6 +40,12 @@ int main(int argc, char **argv) {
 	else if (strcmp(argv[1], "cifar") == 0)
 	{
 		Cifar10Dataset_1batch d;
+		KmeansSerial kmeans (d.X, d.nExamples, d.nDim, true);
+		kmeans.run(nCentroids, maxIter);
+	}
+	else if (strcmp(argv[1], "wine") == 0)
+	{
+		WineDataset d;
 		KmeansSerial kmeans (d.X, d.nExamples, d.nDim, true);
 		kmeans.run(nCentroids, maxIter);
 	}

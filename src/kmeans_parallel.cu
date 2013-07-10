@@ -33,9 +33,9 @@ void clear_vectors(float *d_runningSumOfExamplesPerCentroid,
 		*d_changedSinceLastIteration = 0;
 }
 
-#define BLOCKSIZEEXAMPLES 2
-#define BLOCKSIZECENTROIDS 2
-#define DIMENSIONS 3072
+#define BLOCKSIZEEXAMPLES 30
+#define BLOCKSIZECENTROIDS 30
+#define DIMENSIONS 11
 __global__
 void run_kmeans_parallel(float *d_dataX, float *d_centroidPosition,
 		int *d_centroidAssignedToExample,
@@ -46,14 +46,14 @@ void run_kmeans_parallel(float *d_dataX, float *d_centroidPosition,
 	int myCentroid = blockIdx.y * blockDim.y + threadIdx.y;
 	if (myExample >= nExamples || myCentroid >= nCentroids)
 		return; //out of range
-
+    int i;
 //Copy data to shared memory
+#ifdef USESHAREDMEMORY
 	__shared__ float examples[BLOCKSIZEEXAMPLES][DIMENSIONS];
     __shared__ float centroids[BLOCKSIZECENTROIDS][DIMENSIONS];
 
-    int i;
 
-    if (threadIdx.x + threadIdx.y == 1)
+    if (threadIdx.x == threadIdx.y)
     {
 		for (i = 0; i < nDim; i++) {
 
@@ -63,7 +63,7 @@ void run_kmeans_parallel(float *d_dataX, float *d_centroidPosition,
     }
 
     __syncthreads();
-
+#endif
 	float sum = 0;
 	float currentVal;
 
@@ -74,9 +74,11 @@ void run_kmeans_parallel(float *d_dataX, float *d_centroidPosition,
 
 	for (i = 0; i < nDim; i++) {
 
-		//currentVal = d_centroidPosition[myCentroid * nDim + i] - d_dataX[myExample * nDim + i];
-
+#ifdef USESHAREDMEMORY
 		currentVal = centroids[threadIdx.y][i] - examples[threadIdx.x][i];
+#else
+		currentVal = d_centroidPosition[myCentroid * nDim + i] - d_dataX[myExample * nDim + i];
+#endif
 
 		sum += currentVal * currentVal;
 	}
