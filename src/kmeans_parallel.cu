@@ -53,7 +53,7 @@ void run_kmeans_parallel(float *d_dataX, float *d_centroidPosition,
     __shared__ float centroids[BLOCKSIZECENTROIDS][DIMENSIONS];
 
 
-    if (threadIdx.x == threadIdx.y)
+    //if (threadIdx.x == threadIdx.y)
     {
 		for (i = 0; i < nDim; i++) {
 
@@ -75,6 +75,11 @@ void run_kmeans_parallel(float *d_dataX, float *d_centroidPosition,
 	for (i = 0; i < nDim; i++) {
 
 #ifdef USESHAREDMEMORY
+//		printf("BlockIDx: %d, BlockIDy: %d, ThreadIDx: %d, ThreadIDy: %d; Examples: %f %f; Centroids: %f, %f\n", blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, examples[threadIdx.x][i], d_dataX[myExample * nDim + i], centroids[threadIdx.y][i], d_centroidPosition[myCentroid * nDim + i]);
+//		assert(centroids[threadIdx.y][i] == d_centroidPosition[myCentroid * nDim + i]);
+//		assert(examples[threadIdx.x][i] == d_dataX[myExample * nDim + i]);
+
+
 		currentVal = centroids[threadIdx.y][i] - examples[threadIdx.x][i];
 #else
 		currentVal = d_centroidPosition[myCentroid * nDim + i] - d_dataX[myExample * nDim + i];

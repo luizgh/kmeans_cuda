@@ -1,7 +1,7 @@
 NVCC=nvcc
 
 CUDA_INCLUDEPATH=/usr/local/cuda-5.0/include
-NVCC_OPTS=-arch=sm_20 -Xcompiler -Wall -Xcompiler -Wextra -m64  -g -DFIXSEED  -O3 
+NVCC_OPTS=-arch=sm_20 -Xcompiler -Wall -Xcompiler -Wextra -m64  -g -DFIXSEED  -O3  -DUSESHAREDMEMORY
 GCC_OPTS=-Wall -Wextra -m64 -g -DFIXSEED -O3
 
 all: serial parallel
