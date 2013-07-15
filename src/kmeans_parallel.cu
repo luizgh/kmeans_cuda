@@ -154,6 +154,9 @@ float* KmeansParallel::run(int nCentroids, int maxIter) {
 	(*initializeCentroidsFunction)(dataX, centroidPosition, nCentroids, nDim,
 			nExamples);
 
+	CudaTimer totalTime;
+
+	totalTime.start();
 	AllocateMemoryAndCopyVariablesToGPU();
 
 	int blockSize_examplesDim = BLOCKSIZEEXAMPLES;
@@ -226,13 +229,17 @@ float* KmeansParallel::run(int nCentroids, int maxIter) {
 
     CopyResultsFromGPU();
 
-    float total = totalTimeInClearVectorsKernel + totalTimeInMainKernel + totalTimeInAggregateCentroidsKernel + totalTimeInUpdateCentroidsKernel;
+    float totalTimeInKernels = totalTimeInClearVectorsKernel + totalTimeInMainKernel + totalTimeInAggregateCentroidsKernel + totalTimeInUpdateCentroidsKernel;
+    
+    float total = totalTime.stop();
 
+    printf("Total time: %f ms\n", total);
+    printf("Total kernel time: %f ms\n", totalTimeInKernels);
 	printf("Time spent for each kernel: \n");
-	printf("Clear: %f ms (%.2f%%)\n", totalTimeInClearVectorsKernel, totalTimeInClearVectorsKernel / total * 100);
-	printf("Main: %f ms (%.2f%%)\n", totalTimeInMainKernel, totalTimeInMainKernel/ total *100);
-	printf("Aggregate Centroids: %f ms (%.2f%%)\n", totalTimeInAggregateCentroidsKernel, totalTimeInAggregateCentroidsKernel/ total *100);
-	printf("Update Centroids: %f ms (%.2f%%)\n", totalTimeInUpdateCentroidsKernel, totalTimeInUpdateCentroidsKernel/ total *100);
+	printf("Clear: %f ms (%.2f%%)\n", totalTimeInClearVectorsKernel, totalTimeInClearVectorsKernel / totalTimeInKernels * 100);
+	printf("Main: %f ms (%.2f%%)\n", totalTimeInMainKernel, totalTimeInMainKernel/ totalTimeInKernels *100);
+	printf("Aggregate Centroids: %f ms (%.2f%%)\n", totalTimeInAggregateCentroidsKernel, totalTimeInAggregateCentroidsKernel/ totalTimeInKernels *100);
+	printf("Update Centroids: %f ms (%.2f%%)\n", totalTimeInUpdateCentroidsKernel, totalTimeInUpdateCentroidsKernel/ totalTimeInKernels *100);
 	printf("Centroids: \n");
 	int i;
 	for (i = 0; i < nCentroids; i++)
