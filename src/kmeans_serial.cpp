@@ -7,6 +7,7 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <stdint.h>
 #include <string>
 #include <cassert>
 #include <ctime>
@@ -17,6 +18,13 @@
 #include "kmeans.h"
 #include "kmeans_serial.h"
 #include <algorithm>
+
+long long timespecDiff(struct timespec *timeA_p, struct timespec *timeB_p)
+{
+  return ((timeA_p->tv_sec * 1000000000) + timeA_p->tv_nsec) -
+           ((timeB_p->tv_sec * 1000000000) + timeB_p->tv_nsec);
+}
+
 
 KmeansSerial::KmeansSerial(float *data, int nExamples, int nDim,
 		bool verbose) {
@@ -52,6 +60,9 @@ float* KmeansSerial::run(int nCentroids, int maxIter) {
 	//InitializeCentroids
 	(*initializeCentroidsFunction)(dataX, centroidPosition, nCentroids, nDim, nExamples);
 
+	 struct timespec start, end;
+	  clock_gettime(CLOCK_MONOTONIC, &start);
+
 	changedFromLastIteration = 1;
 	int nIteration = 0;
 	while (changedFromLastIteration && (nIteration < maxIter || maxIter == -1)) {
@@ -85,7 +96,10 @@ float* KmeansSerial::run(int nCentroids, int maxIter) {
 		}
 
 	}
+	clock_gettime(CLOCK_MONOTONIC, &end);
+    long long timeElapsed = timespecDiff(&end, &start);
 	printf("done\n");
+	printf("Total time: %f ms\n", ((float)timeElapsed)/1000000);
 	printf("Centroids: \n");
 	int i;
 	for (i = 0; i < nCentroids; i++)
