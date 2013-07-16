@@ -11,10 +11,11 @@
 class Dataset {
 
 public:
-	float *X;
-	int *y;
-	static const int nExamples;
-	static const int nDim;
+
+	virtual float* getX() = 0;
+	virtual int* getY() = 0;
+	virtual int getNExamples() = 0;
+	virtual int getnDim() = 0;
 
 };
 

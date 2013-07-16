@@ -8,8 +8,9 @@
 #ifndef CIFAR10_DATA_H_
 #define CIFAR10_DATA_H_
 
+#include "dataset.h"
 
-class Cifar10Dataset_1batch {
+class Cifar10Dataset_1batch : public Dataset {
 
 private:
 	int load_cifar_data_from_batches();
@@ -22,6 +23,12 @@ public:
 	int *y;
 	static const int nExamples = 10000;
 	static const int nDim = 3072;
+
+	float* getX() { return X; }
+	int* getY() { return y; }
+	int getNExamples() { return nExamples; }
+	int getnDim() { return nDim; }
+
 
 };
 

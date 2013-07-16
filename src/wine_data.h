@@ -17,13 +17,23 @@ private:
 	int index;
 	int read_file(const char *filename);
 
+
 public:
-	WineDataset();
-	~WineDataset();
+
 	float *X;
 	int *y;
 	static const int nExamples = 6497;
 	static const int nDim = 11;
+
+
+	WineDataset();
+	~WineDataset();
+
+	float* getX() { return X; }
+	int* getY() { return y; }
+	int getNExamples() { return nExamples; }
+	int getnDim() { return nDim; }
+
 
 };
 

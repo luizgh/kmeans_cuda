@@ -8,7 +8,8 @@
 #ifndef LOAD_IRIS_DATA_H_
 #define LOAD_IRIS_DATA_H_
 
-class IrisDataset {
+#include "dataset.h"
+class IrisDataset : public Dataset {
 
 private:
 	int load_iris_data_from_file(const char *filename);
@@ -19,6 +20,13 @@ public:
 	int *y;
 	static const int nExamples = 150;
 	static const int nDim = 4;
+
+	float* getX() { return X; }
+	int* getY() { return y; }
+	int getNExamples() { return nExamples; }
+	int getnDim() { return nDim; }
+
+
 
 };
 
