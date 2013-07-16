@@ -11,7 +11,7 @@
 #include "kmeans_parallel.h"
 #include "wine_data.h"
 
-const int nRuns = 20;
+const int nRuns = 100;
 
 int main()
 {
@@ -24,7 +24,7 @@ int main()
 	KmeansTester testSerial(kmeansSerial, nRuns);
 	KmeansTester testParallel(kmeansParallel, nRuns);
 
-	int testCentroids[] = { 30, 60, 90, 120,150};
+	int testCentroids[] = { 60,120,180,240};
 	int nTests = sizeof(testCentroids) / sizeof(int);
 
 	printf("NCentroids\tSerial\tParallel\n");
