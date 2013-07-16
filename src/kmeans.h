@@ -8,13 +8,15 @@
 #ifndef KMEANS_H_
 #define KMEANS_H_
 
-typedef void (*initFunction)(float *, float *, int, int, int);
+typedef void (*initFunction)(float *, float *, int, int, int, bool);
 
 class Kmeans
 {
 public:
 	virtual void setInitializeCentroidsFunction(initFunction fun) = 0;
 	virtual float* run(int nCentroids, int maxIter = -1) = 0;
+
+	virtual float getLastRunningTime() = 0;
 };
 
 

@@ -33,6 +33,7 @@ KmeansSerial::KmeansSerial(float *data, int nExamples, int nDim,
 	this->nDim = nDim;
 	this->verbose = verbose;
 	this->initializeCentroidsFunction = &InitializeCentroids;
+	this->lastRunningTime = 0;
 }
 
 void KmeansSerial::setInitializeCentroidsFunction(initFunction fun) {
@@ -53,12 +54,13 @@ int KmeansSerial::FindClosestCentroidsAndCheckForChanges() {
 
 
 float* KmeansSerial::run(int nCentroids, int maxIter) {
+	this->lastRunningTime = 0;
 	this->nCentroids = nCentroids;
 	int iExample, changedFromLastIteration;
 	AllocateMemoryForCentroidVariables();
 
 	//InitializeCentroids
-	(*initializeCentroidsFunction)(dataX, centroidPosition, nCentroids, nDim, nExamples);
+	(*initializeCentroidsFunction)(dataX, centroidPosition, nCentroids, nDim, nExamples, verbose);
 
 	 struct timespec start, end;
 	  clock_gettime(CLOCK_MONOTONIC, &start);
@@ -98,18 +100,29 @@ float* KmeansSerial::run(int nCentroids, int maxIter) {
 	}
 	clock_gettime(CLOCK_MONOTONIC, &end);
     long long timeElapsed = timespecDiff(&end, &start);
-	printf("done\n");
-	printf("Total time: %f ms\n", ((float)timeElapsed)/1000000);
-	printf("Centroids: \n");
-	int i;
-	for (i = 0; i < nCentroids; i++)
-		printf("%.17g %.17g %.17g %.17g\n", centroidPosition[i * nDim + 0],
-				centroidPosition[i * nDim + 1], centroidPosition[i * nDim + 2],
-				centroidPosition[i * nDim + 3]);
-	fflush(stdout);
+    lastRunningTime = ((float)timeElapsed)/1000000;
+
+    if (this->verbose)
+    {
+		printf("done\n");
+		printf("Total time: %f ms\n", lastRunningTime);
+
+
+		printf("Centroids: \n");
+		int i;
+		for (i = 0; i < nCentroids; i++)
+			printf("%.17g %.17g %.17g %.17g\n", centroidPosition[i * nDim + 0],
+					centroidPosition[i * nDim + 1], centroidPosition[i * nDim + 2],
+					centroidPosition[i * nDim + 3]);
+
+		fflush(stdout);
+    }
 	return centroidPosition;
 }
 
+float KmeansSerial::getLastRunningTime() {
+	return lastRunningTime;
+}
 
 void KmeansSerial::AllocateMemoryForCentroidVariables() {
 	//Allocate memory for centroid variables
@@ -136,7 +149,7 @@ void KmeansSerial::ClearfloatArray(float* vector, int size) {
 
 
 void KmeansSerial::InitializeCentroids(float *dataX, float *centroidPosition,
-		int nCentroids, int nDim, int nExamples) {
+		int nCentroids, int nDim, int nExamples, bool verbose) {
 	//Initialize centroids with K random examples (Forgy's method)
     int *randomVector;
     int i,j;
@@ -147,15 +160,18 @@ void KmeansSerial::InitializeCentroids(float *dataX, float *centroidPosition,
 
     std::random_shuffle(randomVector, randomVector+ nExamples);
 
-	printf("Centroids initialized with examples: ");
+    if (verbose)
+    	printf("Centroids initialized with examples: ");
 	int selectedExample;
 	for (i = 0; i < nCentroids; i++) {
 		selectedExample = randomVector[i];
-		printf("%d ", selectedExample);
+		if (verbose)
+			printf("%d ", selectedExample);
 		for (j = 0; j < nDim; j++)
 			centroidPosition[i * nDim + j] = dataX[selectedExample * nDim + j];
 	}
-	printf("\n");
+	if(verbose)
+		printf("\n");
 
 }
 

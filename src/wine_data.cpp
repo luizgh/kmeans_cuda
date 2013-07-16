@@ -37,7 +37,6 @@ int WineDataset::read_file(const char *filename)
 
 	char line[1000];
 	float tempx[12];
-	int j = 0;
 
 	fgets(line, sizeof(line), file); //ignore first line
 	while (fgets(line, sizeof(line), file))

@@ -147,11 +147,12 @@ void update_centroids(float *d_centroidPosition,
 
 float* KmeansParallel::run(int nCentroids, int maxIter) {
 	this->nCentroids = nCentroids;
+	lastExecutionTime = 0;
 	AllocateMemoryForCentroidVariables();
 
 	//InitializeCentroids
 	(*initializeCentroidsFunction)(dataX, centroidPosition, nCentroids, nDim,
-			nExamples);
+			nExamples, verbose);
 
 	CudaTimer totalTime;
 
@@ -192,7 +193,8 @@ float* KmeansParallel::run(int nCentroids, int maxIter) {
 
     while (changedSinceLastIteration &&
     		(nIteration < maxIter || maxIter == -1)) {
-    	printf ("Starting iteration %d:\n", nIteration);
+    	if (verbose)
+    		printf ("Starting iteration %d:\n", nIteration);
 
     	cudaTimer.start();
 		clear_vectors<<<gridSizeCentroids, blockSize_centroids>>> (d_runningSumOfExamplesPerCentroid, d_numberOfExamplePerCentroid,nCentroids, nDim, d_changedSinceLastIteration);
@@ -231,21 +233,26 @@ float* KmeansParallel::run(int nCentroids, int maxIter) {
     float totalTimeInKernels = totalTimeInClearVectorsKernel + totalTimeInMainKernel + totalTimeInAggregateCentroidsKernel + totalTimeInUpdateCentroidsKernel;
     
     float total = totalTime.stop();
+    lastExecutionTime = total;
 
-    printf("Total time: %f ms\n", total);
-    printf("Total kernel time: %f ms\n", totalTimeInKernels);
-	printf("Time spent for each kernel: \n");
-	printf("Clear: %f ms (%.2f%%)\n", totalTimeInClearVectorsKernel, totalTimeInClearVectorsKernel / totalTimeInKernels * 100);
-	printf("Main: %f ms (%.2f%%)\n", totalTimeInMainKernel, totalTimeInMainKernel/ totalTimeInKernels *100);
-	printf("Aggregate Centroids: %f ms (%.2f%%)\n", totalTimeInAggregateCentroidsKernel, totalTimeInAggregateCentroidsKernel/ totalTimeInKernels *100);
-	printf("Update Centroids: %f ms (%.2f%%)\n", totalTimeInUpdateCentroidsKernel, totalTimeInUpdateCentroidsKernel/ totalTimeInKernels *100);
-	printf("Centroids: \n");
-	int i;
-	for (i = 0; i < nCentroids; i++)
-		printf("%.17g %.17g %.17g %.17g\n", centroidPosition[i * nDim + 0],
-				centroidPosition[i * nDim + 1], centroidPosition[i * nDim + 2],
-				centroidPosition[i * nDim + 3]);
-	fflush(stdout);
+    if (verbose)
+    {
+		printf("Total time: %f ms\n", total);
+		printf("Total kernel time: %f ms\n", totalTimeInKernels);
+		printf("Time spent for each kernel: \n");
+		printf("Clear: %f ms (%.2f%%)\n", totalTimeInClearVectorsKernel, totalTimeInClearVectorsKernel / totalTimeInKernels * 100);
+		printf("Main: %f ms (%.2f%%)\n", totalTimeInMainKernel, totalTimeInMainKernel/ totalTimeInKernels *100);
+		printf("Aggregate Centroids: %f ms (%.2f%%)\n", totalTimeInAggregateCentroidsKernel, totalTimeInAggregateCentroidsKernel/ totalTimeInKernels *100);
+		printf("Update Centroids: %f ms (%.2f%%)\n", totalTimeInUpdateCentroidsKernel, totalTimeInUpdateCentroidsKernel/ totalTimeInKernels *100);
+		printf("Centroids: \n");
+		int i;
+		for (i = 0; i < nCentroids; i++)
+			printf("%.17g %.17g %.17g %.17g\n", centroidPosition[i * nDim + 0],
+					centroidPosition[i * nDim + 1], centroidPosition[i * nDim + 2],
+					centroidPosition[i * nDim + 3]);
+		fflush(stdout);
+
+    }
 	return centroidPosition;
 }
 
@@ -258,6 +265,7 @@ KmeansParallel::KmeansParallel(float *data, int nExamples, int nDim,
 	this->verbose = verbose;
 	this->initializeCentroidsFunction = &InitializeCentroids;
 	centroidPosition = 0;
+	lastExecutionTime = 0;
 }
 
 KmeansParallel::~KmeansParallel() {
@@ -267,6 +275,10 @@ KmeansParallel::~KmeansParallel() {
 		FreeGPUMemory();
 	}
 
+}
+
+float KmeansParallel::getLastRunningTime() {
+	return lastExecutionTime;
 }
 
 void KmeansParallel::setInitializeCentroidsFunction(initFunction fun) {
@@ -359,7 +371,7 @@ void KmeansParallel::ClearfloatArray(float* vector, int size) {
 }
 
 void KmeansParallel::InitializeCentroids(float *dataX, float *centroidPosition,
-		int nCentroids, int nDim, int nExamples) {
+		int nCentroids, int nDim, int nExamples, bool verbose) {
 	//Initialize centroids with K random examples (Forgy's method)
 
     int *randomVector;
@@ -371,15 +383,18 @@ void KmeansParallel::InitializeCentroids(float *dataX, float *centroidPosition,
 
     std::random_shuffle(randomVector, randomVector+nExamples);
 
-	printf("Centroids initialized with examples: ");
+    if(verbose)
+    	printf("Centroids initialized with examples: ");
 	int selectedExample;
 	for (i = 0; i < nCentroids; i++) {
 		selectedExample = randomVector[i];
-		printf("%d ", selectedExample);
+		if(verbose)
+			printf("%d ", selectedExample);
 		for (j = 0; j < nDim; j++)
 					centroidPosition[i * nDim + j] = dataX[selectedExample * nDim + j];
 	}
-	printf("\n");
+	if(verbose)
+		printf("\n");
 	free(randomVector);
 }
 

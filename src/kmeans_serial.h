@@ -26,13 +26,15 @@ private:
 	int nDim;
 	int nCentroids;
 
+	float lastRunningTime;
+
 	initFunction initializeCentroidsFunction;
 
 	int FindClosestCentroidsAndCheckForChanges();
 	void AllocateMemoryForCentroidVariables();
 	void ClearIntArray(int* vector, int size);
 	void ClearfloatArray(float* vector, int size);
-	static void InitializeCentroids(float *dataX, float *centroidPosition,int nCentroids, int nDim, int nExamples);
+	static void InitializeCentroids(float *dataX, float *centroidPosition,int nCentroids, int nDim, int nExamples, bool verbose);
 	float CalculateDistance(float *dataX, float *centroidPosition, int iExample,int jCentroid);
 	int GetClosestCentroid(int iExample);
 	void CompareTestResultsAgainstBaseline(float *centroidPosition);
@@ -41,6 +43,8 @@ public:
 	KmeansSerial(float *data, int nExamples, int nDim, bool verbose = false);
 	void setInitializeCentroidsFunction(initFunction fun);
 	float* run(int nCentroids, int maxIter = -1);
+
+	float getLastRunningTime();
 };
 
 

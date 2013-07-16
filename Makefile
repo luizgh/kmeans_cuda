@@ -1,10 +1,13 @@
 NVCC=nvcc
 
-CUDA_INCLUDEPATH=/usr/local/cuda-5.0/include
-NVCC_OPTS=-arch=sm_20 -Xcompiler -Wall -Xcompiler -Wextra -m64  -g -DFIXSEED  -O3  -DUSESHAREDMEMORY
-GCC_OPTS=-Wall -Wextra -m64 -g -DFIXSEED -O3
+SHAREDMEMORY=-DUSESHAREDMEMORY
+#FIXSEED=-DFIXSEED
 
-all: bin/test_kmeans_serial bin/test_kmeans_parallel bin/run_kmeans
+CUDA_INCLUDEPATH=/usr/local/cuda-5.0/include
+NVCC_OPTS=-arch=sm_20 -Xcompiler -Wall -Xcompiler -Wextra -m64  -g $(FIXSEED)  -O3 $(SHAREDMEMORY)
+GCC_OPTS=-Wall -Wextra -m64 -g $(FIXSEED) -O3
+
+all: bin/test_kmeans_serial bin/test_kmeans_parallel bin/run_kmeans bin/run_performance_test
 
 bin/test_kmeans_parallel: obj/test_kmeans_parallel.o obj/kmeans_parallel.o obj/cifar10_data.o obj/iris_data.o obj/kmeans_serial.o obj/cudaTimer.o obj/wine_data.o
 	$(NVCC) -o bin/test_kmeans_parallel obj/test_kmeans_parallel.o obj/kmeans_parallel.o obj/cifar10_data.o obj/iris_data.o obj/kmeans_serial.o obj/wine_data.o obj/cudaTimer.o $(NVCC_OPTS)
@@ -15,8 +18,17 @@ bin/test_kmeans_serial: obj/test_kmeans_serial.o obj/kmeans_serial.o obj/cifar10
 bin/run_kmeans: obj/run_kmeans.o obj/kmeans_parallel.o obj/cifar10_data.o obj/iris_data.o obj/cudaTimer.o obj/wine_data.o obj/kmeans_serial.o
 	$(NVCC) -o bin/run_kmeans obj/run_kmeans.o obj/kmeans_parallel.o obj/cifar10_data.o obj/iris_data.o obj/cudaTimer.o obj/wine_data.o obj/kmeans_serial.o $(NVCC_OPTS)
 
+bin/run_performance_test: obj/run_performance_test.o obj/kmeans_parallel.o obj/cifar10_data.o obj/iris_data.o obj/cudaTimer.o obj/wine_data.o obj/kmeans_serial.o obj/kmeans_tester.o
+	$(NVCC) -o bin/run_performance_test obj/run_performance_test.o obj/kmeans_parallel.o obj/cifar10_data.o obj/iris_data.o obj/cudaTimer.o obj/wine_data.o obj/kmeans_serial.o obj/kmeans_tester.o $(NVCC_OPTS)
+
 obj/run_kmeans.o: src/run_kmeans.cpp
 	$(NVCC) -c -o obj/run_kmeans.o src/run_kmeans.cpp $(NVCC_OPTS)
+
+obj/run_performance_test.o: src/run_performance_test.cpp
+	$(NVCC) -c -o obj/run_performance_test.o src/run_performance_test.cpp $(NVCC_OPTS)
+
+obj/kmeans_tester.o: src/kmeans_tester.cpp
+	$(NVCC) -c -o obj/kmeans_tester.o src/kmeans_tester.cpp $(NVCC_OPTS)
 
 obj/test_kmeans_parallel.o: src/test_kmeans_parallel.cpp 
 	$(NVCC) -c -o obj/test_kmeans_parallel.o src/test_kmeans_parallel.cpp $(NVCC_OPTS)

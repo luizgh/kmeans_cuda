@@ -17,7 +17,7 @@ void PrintVector(int *v, int size);
 void PrintVector(float *v, int size);
 
 void InitializeCentroidsTest(float *dataX, float *centroidPosition,
-		int nCentroids, int nDim, int) {
+		int nCentroids, int nDim, int , bool ) {
 	//Initialize centroids with K random examples (Forgy's method)
 	int i;
 	int selectedExamples[] = { 16, 85, 79 };
