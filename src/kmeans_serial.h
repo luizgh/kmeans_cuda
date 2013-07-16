@@ -8,10 +8,12 @@
 #ifndef KMEANS_SERIAL_H_
 #define KMEANS_SERIAL_H_
 
-class KmeansSerial {
+#include "kmeans.h"
 
-	//TODO: switch back to private after tests
-public:
+class KmeansSerial : public Kmeans {
+
+
+private:
 	bool verbose;
 	float *dataX;
 

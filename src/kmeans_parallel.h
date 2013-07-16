@@ -8,9 +8,9 @@
 #ifndef KMEANS_PARALLEL_H_
 #define KMEANS_PARALLEL_H_
 
-class KmeansParallel {
+class KmeansParallel : public Kmeans {
 
-public:
+private:
 	bool verbose;
 	float *dataX;
 	float *centroidPosition;

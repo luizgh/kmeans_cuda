@@ -8,7 +8,9 @@
 #ifndef LOAD_WINE_DATA_H_
 #define LOAD_WINE_DATA_H_
 
-class WineDataset {
+#include "dataset.h"
+
+class WineDataset : public Dataset {
 
 private:
 	int load_wine_data_from_file(const char *filename_red, const char *filename_white);
