@@ -42,6 +42,7 @@ void run_kmeans_parallel(float *d_dataX, float *d_centroidPosition,
 		float *d_runningSumOfExamplesPerCentroid,
 		int *d_numberOfExamplePerCentroid, int nExamples, int nCentroids, int nDim, float *d_distanceExampleCentroid) {
 
+
 	int myExample = blockIdx.x * blockDim.x + threadIdx.x;
 	int myCentroid = blockIdx.y * blockDim.y + threadIdx.y;
 	if (myExample >= nExamples || myCentroid >= nCentroids)
@@ -53,14 +54,12 @@ void run_kmeans_parallel(float *d_dataX, float *d_centroidPosition,
     __shared__ float centroids[BLOCKSIZECENTROIDS][DIMENSIONS];
 
 
-    //if (threadIdx.x == threadIdx.y)
-    {
-		for (i = 0; i < nDim; i++) {
+    //Note: Only works if all blocks have more than nDim threads in each dimension (x.y)
+    if (threadIdx.y < nDim)
+    	examples[threadIdx.x][threadIdx.y] = d_dataX[myExample * nDim + threadIdx.y];
 
-			examples[threadIdx.x][i] = d_dataX[myExample * nDim + i];
-			centroids[threadIdx.y][i] = d_centroidPosition [myCentroid * nDim + i];
-		}
-    }
+    if (threadIdx.x < nDim)
+    	centroids[threadIdx.y][threadIdx.x] = d_centroidPosition [myCentroid * nDim + threadIdx.x];
 
     __syncthreads();
 #endif
@@ -75,7 +74,7 @@ void run_kmeans_parallel(float *d_dataX, float *d_centroidPosition,
 	for (i = 0; i < nDim; i++) {
 
 #ifdef USESHAREDMEMORY
-//		printf("BlockIDx: %d, BlockIDy: %d, ThreadIDx: %d, ThreadIDy: %d; Examples: %f %f; Centroids: %f, %f\n", blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, examples[threadIdx.x][i], d_dataX[myExample * nDim + i], centroids[threadIdx.y][i], d_centroidPosition[myCentroid * nDim + i]);
+		//printf("BlockIDx: %d, BlockIDy: %d, ThreadIDx: %d, ThreadIDy: %d; Examples: %f %f; Centroids: %f, %f\n", blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, examples[threadIdx.x][i], d_dataX[myExample * nDim + i], centroids[threadIdx.y][i], d_centroidPosition[myCentroid * nDim + i]);
 //		assert(centroids[threadIdx.y][i] == d_centroidPosition[myCentroid * nDim + i]);
 //		assert(examples[threadIdx.x][i] == d_dataX[myExample * nDim + i]);
 
