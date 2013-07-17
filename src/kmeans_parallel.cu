@@ -253,6 +253,11 @@ float* KmeansParallel::run(int nCentroids, int maxIter) {
 		fflush(stdout);
 
     }
+
+	FreeHostMemory();
+	FreeGPUMemory();
+
+
 	return centroidPosition;
 }
 
@@ -269,11 +274,6 @@ KmeansParallel::KmeansParallel(float *data, int nExamples, int nDim,
 }
 
 KmeansParallel::~KmeansParallel() {
-	if (centroidPosition) //if executed
-	{
-		FreeHostMemory();
-		FreeGPUMemory();
-	}
 
 }
 
@@ -348,6 +348,7 @@ void KmeansParallel::FreeGPUMemory() {
 	checkCudaErrors(cudaFree(d_runningSumOfExamplesPerCentroid));
 	checkCudaErrors(cudaFree(d_numberOfExamplePerCentroid));
 	checkCudaErrors(cudaFree(d_changedSinceLastIteration));
+	checkCudaErrors(cudaFree(d_distanceExampleCentroid));
 }
 
 void KmeansParallel::CopyCompletionFlagFromGPU(){
