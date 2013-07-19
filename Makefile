@@ -4,8 +4,8 @@ SHAREDMEMORY=-DUSESHAREDMEMORY  #Note: TEST only: use it only for tests on the w
 #FIXSEED=-DFIXSEED
 
 CUDA_INCLUDEPATH=/usr/local/cuda-5.0/include
-NVCC_OPTS=-arch=sm_20 -Xcompiler -Wall -Xcompiler -Wextra -m64  -g $(FIXSEED)  -O3 $(SHAREDMEMORY)
-GCC_OPTS=-Wall -Wextra -m64 -g $(FIXSEED) -O3
+NVCC_OPTS=-arch=sm_20 -Xcompiler -Wall -Xcompiler -Wextra -m64  -g $(FIXSEED)  -O3 $(SHAREDMEMORY) -lrt
+GCC_OPTS=-Wall -Wextra -m64 -g $(FIXSEED) -O3 -lrt
 
 all: bin/test_kmeans_serial bin/test_kmeans_parallel bin/run_kmeans bin/run_performance_test
 
