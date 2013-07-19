@@ -24,7 +24,7 @@ int main()
 	KmeansTester testSerial(kmeansSerial, nRuns);
 	KmeansTester testParallel(kmeansParallel, nRuns);
 
-	int testCentroids[] = { 60,120,180,240};
+	int testCentroids[] = { 900, 1200, 1500, 1800, 2100	};
 	int nTests = sizeof(testCentroids) / sizeof(int);
 
 	printf("NCentroids\tSerial\tParallel\n");

@@ -11,6 +11,7 @@
 #include <ctime>
 #include <cmath>
 #include <cfloat>
+#include <vector>
 #include "utils.h"
 #include "kmeans.h"
 #include "kmeans_parallel.h"
@@ -137,7 +138,8 @@ void update_centroids(float *d_centroidPosition,
 	{
 		int jDim;
 		for (jDim = 0; jDim < nDim; jDim++)
-			d_centroidPosition[myExample * nDim + jDim] =
+			if (d_numberOfExamplePerCentroid[myExample] != 0)
+				d_centroidPosition[myExample * nDim + jDim] =
 					d_runningSumOfExamplesPerCentroid[myExample * nDim
 							+ jDim]
 							/ d_numberOfExamplePerCentroid[myExample];
@@ -335,7 +337,7 @@ void KmeansParallel::AllocateMemoryAndCopyVariablesToGPU() {
 }
 
 void KmeansParallel::FreeHostMemory() {
-	free(centroidPosition);
+	//free(centroidPosition);
 	free(centroidAssignedToExample);
 	free(runningSumOfExamplesPerCentroid);
 	free(numberOfExamplePerCentroid);

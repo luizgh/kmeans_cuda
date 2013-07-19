@@ -91,7 +91,8 @@ float* KmeansSerial::run(int nCentroids, int maxIter) {
 				currentCentroid++) {
 			int jDim;
 			for (jDim = 0; jDim < nDim; jDim++)
-				centroidPosition[currentCentroid * nDim + jDim] =
+				if (numberOfExamplePerCentroid[currentCentroid] != 0)
+					centroidPosition[currentCentroid * nDim + jDim] =
 						runningSumOfExamplesPerCentroid[currentCentroid * nDim
 								+ jDim]
 								/ numberOfExamplePerCentroid[currentCentroid];
@@ -117,7 +118,7 @@ float* KmeansSerial::run(int nCentroids, int maxIter) {
 
 		fflush(stdout);
     }
-    FreeCentroidsMemory();
+    FreeMemory();
 	return centroidPosition;
 }
 
@@ -135,8 +136,7 @@ void KmeansSerial::AllocateMemoryForCentroidVariables() {
 	numberOfExamplePerCentroid = (int*) ((malloc(sizeof(int) * nCentroids)));
 }
 
-void KmeansSerial::FreeCentroidsMemory() {
-	free(centroidPosition);
+void KmeansSerial::FreeMemory() {
 	free(centroidAssignedToExample);
 	free(runningSumOfExamplesPerCentroid);
 	free(numberOfExamplePerCentroid);

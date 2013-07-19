@@ -39,9 +39,16 @@ void CompareTestResultsAgainstBaseline(float *centroidPosition, int nDim) {
 	float maxError = 1e-5;
 	float error = 0;
 	for (i = 0; i < nCentroids * nDim; i++)
+	{
 		error += fabs(centroidPosition[i] - baseline[i]);
 
-	assert(error < maxError);
+		if (error >= maxError)
+		{
+			printf("Error exceeded threshold. Pos: %d, centroid: %f, baseline: %f, error: %f\n", i, centroidPosition[i],baseline[i], error);
+		}
+		assert(error < maxError);
+	}
+
 	printf("OK!! Error agains baseline below threshold: %lf\n", error);
 }
 
@@ -50,11 +57,11 @@ int main() {
 	float *centroidPositions;
 	IrisDataset d;
 
-	KmeansSerial kmeans (d.X, d.nExamples, d.nDim, true);
+	KmeansSerial kmeans (d.getX(), d.getNExamples(), d.getnDim(), true);
 	kmeans.setInitializeCentroidsFunction(InitializeCentroidsTest);
 	centroidPositions = kmeans.run(3);
 
-	CompareTestResultsAgainstBaseline(centroidPositions, d.nDim);
+	CompareTestResultsAgainstBaseline(centroidPositions, d.getnDim());
 
 
 }

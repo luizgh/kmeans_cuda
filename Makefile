@@ -1,6 +1,6 @@
 NVCC=nvcc
 
-SHAREDMEMORY=-DUSESHAREDMEMORY
+SHAREDMEMORY=-DUSESHAREDMEMORY  #Note: TEST only: use it only for tests on the wine database, with centroids multiple of 30
 #FIXSEED=-DFIXSEED
 
 CUDA_INCLUDEPATH=/usr/local/cuda-5.0/include
