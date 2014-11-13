@@ -6,21 +6,22 @@ Kmeans implementation in C++ / CUDA
 
 This repository contains the implementation of standard K-means:
 
-1) Serial version
-2) Parallel version using CUDA
+* Serial version
+* Parallel version using CUDA
 
-It also contains code to load the following libraries:
+It also contains code to load the following datasets:
 
-1) The "Iris" dataset: http://archive.ics.uci.edu/ml/datasets/Iris
-2) The CIFAR10 dataset: http://www.cs.toronto.edu/~kriz/cifar.html
+* The "Iris" dataset: http://archive.ics.uci.edu/ml/datasets/Iris
+* The CIFAR10 dataset: http://www.cs.toronto.edu/~kriz/cifar.html
 
 In order to compile this code you need the CUDA toolkit and developer drivers (https://developer.nvidia.com/cuda-downloads)
 
 
 How to use:
-
-./run_kmeans <iris|cifar> <nCentroids>
-
+```
+  ./run_kmeans <iris|cifar> <nCentroids>
+```
 Examples:
-
-./run_kmeans cifar 100
+```
+  ./run_kmeans cifar 100
+```
